@@ -59,7 +59,7 @@
 
   /* ---- stage: the carved relief + crack cards below it ---- */
   .stage{position:relative;min-height:0;display:flex;flex-direction:column;gap:6px;align-items:stretch;padding:8px 6px 6px;border-radius:8px;overflow:hidden;
-    background:radial-gradient(ellipse at 50% 20%,#2a1012 0,#0c0506 75%);border:1px solid #3d362b}
+    background:radial-gradient(ellipse at 50% 20%,#2c2a32 0,#0c0b10 75%);border:1px solid #3d362b}
   .sculpt{flex:1 1 0;min-width:0;min-height:0;display:flex;justify-content:center;align-items:center}
   .sculpt svg{height:100%;max-width:100%;filter:drop-shadow(0 8px 12px #000d)}
   .cracks{flex:0 0 auto;display:flex;flex-direction:row;align-items:center;gap:0;padding:0 4px;z-index:1;height:92px;overflow:hidden}
@@ -91,7 +91,7 @@
   .cname{font:700 12px var(--serif);letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .gem{flex:0 0 auto;width:11px;height:11px;transform:rotate(45deg);background:var(--tc);border:1px solid #000a;box-shadow:0 0 6px var(--tc)}
   .art{position:relative;flex:1 1 0;min-height:56px;margin:3px;border-radius:4px;overflow:hidden;
-    background:radial-gradient(ellipse at 50% 38%,#6a1511 0,#2c080a 62%,#0d0304 100%);box-shadow:inset 0 0 14px #000d,inset 0 0 0 1px #000}
+    background:radial-gradient(ellipse at 50% 38%,#5a5662 0,#2a2832 62%,#0c0b10 100%);box-shadow:inset 0 0 14px #000d,inset 0 0 0 1px #000}
   .art::before{content:"";position:absolute;inset:0;pointer-events:none;z-index:1;
     background:repeating-linear-gradient(115deg,#0000 0 6px,#00000022 6px 7px),radial-gradient(ellipse at 50% 50%,#0000 55%,#000a 100%)}
   .art svg{position:absolute;inset:2px;width:calc(100% - 4px);height:calc(100% - 4px);filter:drop-shadow(0 2px 2px #000a)}
@@ -137,25 +137,26 @@
      ghost  = charcoal sketch on the primed canvas
      rough  = flat umber underpainting (some strokes landed)
      carved = fully rendered (class name kept from the original code = "finished")        */
-  .part .m{stroke:#0b0304;stroke-opacity:.75;stroke-width:.9;stroke-linejoin:round}
+  .part .m{stroke:#0e0c14;stroke-opacity:.75;stroke-width:.9;stroke-linejoin:round}
   .part .h{fill:url(#formR);pointer-events:none}
   .part .hl,.part .dk,.part .bl{fill:none;stroke-linecap:round;stroke-linejoin:round}
   .part .dk{stroke:#0b0304}
-  .part .bl{stroke:#c4130d;stroke-width:1.5}
+  .part .bl{stroke:#17141a;stroke-width:1.2;opacity:.6}
+  .part .hl{stroke:#f6efe2}
   .part .sh{fill:#08020a}
-  .part .gl{filter:drop-shadow(0 0 3px var(--g,#ff3a22))}
-  .part.ghost .m{fill:none;stroke:#ffdfa0;stroke-opacity:.5;stroke-width:.9;stroke-dasharray:3 3}
+  .part .gl{fill:#ece4d4;opacity:.3;filter:none}
+  .part.ghost .m{fill:none;stroke:#e8e0d0;stroke-opacity:.5;stroke-width:.9;stroke-dasharray:3 3}
   .part.ghost .h,.part.ghost .hl,.part.ghost .sh,.part.ghost .gl,.part.ghost .bl{display:none}
-  .part.ghost .dk{stroke:#ffdfa0;opacity:.28;stroke-width:.7}
-  .part.rough .m{fill:#4d2c27}
-  .part.rough.r2 .m{fill:#7a483a}
+  .part.ghost .dk{stroke:#e8e0d0;opacity:.28;stroke-width:.7}
+  .part.rough .m{fill:#4a4852}
+  .part.rough.r2 .m{fill:#7d7a84}
   .part.rough .hl,.part.rough .gl,.part.rough .bl{display:none}
   .part.rough .dk{opacity:.4}
   .part.rough.r2 .hl{display:block;opacity:.3}
   .part.rough .sh{opacity:.3}
-  .part.glow.carved{filter:drop-shadow(0 0 4px #ff2a1acc)}
-  .part.gold.carved{filter:drop-shadow(0 0 3px #ffb347aa)}
-  .part.gem.carved:not(.fresh){animation:pulse 3.2s ease-in-out infinite}
+  .part.glow.carved{filter:none}
+  .part.gold.carved{filter:none}
+
   @keyframes pulse{0%,100%{filter:drop-shadow(0 0 2px #ff4d6dcc)}50%{filter:drop-shadow(0 0 8px #ff6f8bff)}}
   .combo.done{opacity:.55;text-decoration:line-through}
   .card.partial .art svg{filter:grayscale(.2) brightness(.9) drop-shadow(1px 2px 1px #000a)}
@@ -202,10 +203,10 @@
     <linearGradient id="gemHi" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#cfc8d8"/></linearGradient>
     <linearGradient id="bladeG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f8faff"/><stop offset=".4" stop-color="#c2c6d2"/><stop offset="1" stop-color="#585c70"/></linearGradient>
     <linearGradient id="bladeD" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8c8690"/><stop offset="1" stop-color="#26242c"/></linearGradient>
-    <linearGradient id="redFade" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ff3a22" stop-opacity=".95"/><stop offset="1" stop-color="#ff3a22" stop-opacity="0"/></linearGradient>
+    <linearGradient id="redFade" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#e8e0d0" stop-opacity=".9"/><stop offset="1" stop-color="#e8e0d0" stop-opacity="0"/></linearGradient>
     <linearGradient id="formR" x1="0" y1="0" x2="1" y2=".5"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset=".5" stop-color="#1a0405" stop-opacity=".14"/><stop offset="1" stop-color="#080102" stop-opacity=".6"/></linearGradient>
-    <radialGradient id="redGlow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ff5535" stop-opacity=".85"/><stop offset=".55" stop-color="#e41b10" stop-opacity=".28"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>
-    <radialGradient id="canvasBg" cx=".5" cy=".3" r=".8"><stop offset="0" stop-color="#5a1612"/><stop offset=".5" stop-color="#220a0b"/><stop offset="1" stop-color="#070203"/></radialGradient>
+    <radialGradient id="redGlow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff2dc" stop-opacity=".7"/><stop offset=".55" stop-color="#b8aa98" stop-opacity=".2"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>
+    <radialGradient id="canvasBg" cx=".5" cy=".3" r=".8"><stop offset="0" stop-color="#5a5662"/><stop offset=".5" stop-color="#26242e"/><stop offset="1" stop-color="#08070b"/></radialGradient>
     <radialGradient id="vignette" cx=".5" cy=".46" r=".75"><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".8"/></radialGradient>
     <linearGradient id="grade" x1="0" y1="0" x2=".7" y2="1"><stop offset="0" stop-color="#ffa860" stop-opacity=".16"/><stop offset=".45" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#100000" stop-opacity=".45"/></linearGradient>
     <clipPath id="cv"><rect x="0" y="0" width="240" height="300"/></clipPath>
@@ -215,12 +216,12 @@
     <!-- painterly: wobbly brushed edges, streaky impasto texture, soft specular bevel -->
     <filter id="paint" x="-6%" y="-6%" width="112%" height="112%">
       <feTurbulence type="fractalNoise" baseFrequency=".035" numOctaves="3" seed="7" result="t"/>
-      <feDisplacementMap in="SourceGraphic" in2="t" scale="3" result="w"/>
-      <feTurbulence type="fractalNoise" baseFrequency=".55 .08" numOctaves="3" seed="2" result="brush"/>
-      <feDiffuseLighting in="brush" surfaceScale="1.1" diffuseConstant="1" lighting-color="#fff" result="bl"><feDistantLight azimuth="225" elevation="60"/></feDiffuseLighting>
-      <feComposite in="w" in2="bl" operator="arithmetic" k1=".28" k2=".8" k3="0" k4="0" result="tex"/>
+      <feDisplacementMap in="SourceGraphic" in2="t" scale="2" result="w"/>
+      <feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="4" seed="2" result="brush"/>
+      <feDiffuseLighting in="brush" surfaceScale="2" diffuseConstant="1" lighting-color="#fff" result="bl"><feDistantLight azimuth="225" elevation="60"/></feDiffuseLighting>
+      <feComposite in="w" in2="bl" operator="arithmetic" k1=".4" k2=".72" k3="0" k4="0" result="tex"/>
       <feGaussianBlur in="w" stdDeviation="1.1" result="b"/>
-      <feSpecularLighting in="b" surfaceScale="3" specularConstant=".45" specularExponent="26" lighting-color="#ffe9c4" result="sp"><feDistantLight azimuth="225" elevation="40"/></feSpecularLighting>
+      <feSpecularLighting in="b" surfaceScale="3" specularConstant=".55" specularExponent="22" lighting-color="#ffffff" result="sp"><feDistantLight azimuth="225" elevation="40"/></feSpecularLighting>
       <feComposite in="sp" in2="w" operator="in" result="spin"/>
       <feComposite in="tex" in2="spin" operator="arithmetic" k1="0" k2="1" k3=".3" k4="0"/>
     </filter>
@@ -230,7 +231,7 @@
     </filter>
     <filter id="weave" x="0" y="0" width="100%" height="100%">
       <feTurbulence type="fractalNoise" baseFrequency=".95 .8" numOctaves="2" seed="5" result="n"/>
-      <feColorMatrix in="n" type="matrix" values="0 0 0 0 .5  0 0 0 0 .4  0 0 0 0 .35  0 0 0 1.4 -.45"/>
+      <feColorMatrix in="n" type="matrix" values="0 0 0 0 .62  0 0 0 0 .6  0 0 0 0 .64  0 0 0 1.5 -.5"/>
     </filter>
     <filter id="soft"><feGaussianBlur stdDeviation="6"/></filter>
   </defs>
@@ -384,7 +385,7 @@ const stems = (list) => list.map(([x,h,rr])=>HL(`M${x},300 C${x+4},${300-h*.5} $
 // cracks split the stone: jagged black fissure with a glowing red core and side branches
 const crackMark = (x,y,s,v) => { const d='M0,-34 L-5,-22 L4,-13 L-6,-1 L3,10 L-4,22 L2,34', br='M4,-13 L15,-9 L19,-1 M-6,-1 L-17,3 L-20,12 M3,10 L12,16';
   return `<g transform="translate(${x} ${y}) scale(${s*(v%2?1:-1)} ${s})"><path d="${d} ${br}" fill="none" stroke="#050204" stroke-width="3.2" stroke-linejoin="bevel" stroke-linecap="round"/>`
-   + `<path d="${d} ${br}" fill="none" stroke="#ff6a40" stroke-width=".9" stroke-linejoin="bevel" opacity=".85" style="filter:drop-shadow(0 0 2px #ff3a22)"/></g>`; };
+   + `<path d="${d} ${br}" fill="none" stroke="#d8d0c2" stroke-width=".7" stroke-linejoin="bevel" opacity=".55"/></g>`; };
 
 // ---------- blade halo ----------
 const sw = (px,py,tx,ty,w) => { const L=Math.hypot(tx-px,ty-py), ux=(tx-px)/L, uy=(ty-py)/L, vx=-uy, vy=ux;
@@ -686,13 +687,13 @@ function dieHTML(v,i,held,blank,test){
 const BG_BURST = (()=>{ const r=rng(21); let s=''; const cx=120, cy=84;
   for(let i=0;i<70;i++){ const a=r()*Math.PI*2, r1=26+r()*46, r2=r1+70+r()*120, w=.035+r()*.08;
     const p=(rad,ang)=>`${f1(cx+Math.cos(ang)*rad)},${f1(cy+Math.sin(ang)*rad*1.15)}`;
-    const col=['#000','#4a0e10','#1d0708','#000'][i%4], op=[.38,.3,.35,.25][i%4];
+    const col=['#000','#34323c','#18171e','#000'][i%4], op=[.38,.3,.35,.25][i%4];
     s+=`<path d="M${p(r1,a-w)} L${p(r2,a)} L${p(r1,a+w)}Z" fill="${col}" opacity="${op}"/>`; }
   return s; })();
 const FRAME = (()=>{ let d=''; for(let y=58;y<=250;y+=28){ d+=`M18,${y-3} l3,3 -3,3 -3,-3Z M222,${y-3} l3,3 -3,3 -3,-3Z `; }
-  return `<rect x="4" y="4" width="232" height="292" fill="none" stroke="#8f6a26" stroke-width="1.4"/><rect x="9" y="9" width="222" height="282" fill="none" stroke="#e8b658" stroke-width=".6" opacity=".55"/>`
-   + `<path d="M4,22 L4,4 L22,4 M16,4 L16,16 L4,16 M236,22 L236,4 L218,4 M224,4 L224,16 L236,16 M4,278 L4,296 L22,296 M16,296 L16,284 L4,284 M236,278 L236,296 L218,296 M224,296 L224,284 L236,284" fill="none" stroke="#e8b658" stroke-width="1.1" opacity=".85"/>`
-   + `<path d="${d}" fill="#e8b658" opacity=".4"/>`; })();
+  return `<rect x="4" y="4" width="232" height="292" fill="none" stroke="#6a6474" stroke-width="1.4"/><rect x="9" y="9" width="222" height="282" fill="none" stroke="#a8a0b0" stroke-width=".6" opacity=".55"/>`
+   + `<path d="M4,22 L4,4 L22,4 M16,4 L16,16 L4,16 M236,22 L236,4 L218,4 M224,4 L224,16 L236,16 M4,278 L4,296 L22,296 M16,296 L16,284 L4,284 M236,278 L236,296 L218,296 M224,296 L224,284 L236,284" fill="none" stroke="#a8a0b0" stroke-width="1.1" opacity=".85"/>`
+   + `<path d="${d}" fill="#a8a0b0" opacity=".4"/>`; })();
 function reliefHTML(p,pi){
   let carved='', ghost='';
   for(const cat of DRAW_ORDER){
@@ -710,7 +711,7 @@ function reliefHTML(p,pi){
     <rect width="240" height="300" fill="url(#canvasBg)"/>
     <g clip-path="url(#cv)"><g filter="url(#brushy)">${BG_BURST}</g></g>
     <ellipse cx="120" cy="84" rx="78" ry="92" fill="url(#redGlow)" opacity=".6"/>
-    <rect width="240" height="300" filter="url(#weave)" opacity=".22" style="mix-blend-mode:overlay"/>
+    <rect width="240" height="300" filter="url(#weave)" opacity=".4" style="mix-blend-mode:overlay"/>
     <rect width="240" height="300" fill="url(#vignette)"/>
     <g clip-path="url(#cv)">
       <g style="filter:drop-shadow(0 2px 3px rgba(0,0,0,.65))"><g filter="url(#paint)">${carved}</g></g>
@@ -733,7 +734,7 @@ function crackCardHTML(i,isNew){
   return `<div class="ccard ${isNew?'drop':''}"><div class="cin2"><div class="ct">CRACK</div>
     <svg viewBox="0 0 60 60"><rect x="3" y="3" width="54" height="54" rx="4" fill="#4b463f"/>
       <path d="${FISSURES[i%3]}" fill="none" stroke="#000" stroke-width="5" stroke-linejoin="bevel"/>
-      <path d="${FISSURES[i%3]}" fill="none" stroke="#ff7a52" stroke-width="2" stroke-linejoin="bevel"/></svg>
+      <path d="${FISSURES[i%3]}" fill="none" stroke="#d8d0c2" stroke-width="1.2" stroke-linejoin="bevel"/></svg>
     <div class="cv">−${v}</div></div></div>`;
 }
 function cracksHTML(p,pi){

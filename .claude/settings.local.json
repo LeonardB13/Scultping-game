@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(sed -i -e '278r __TRACKED_VAR__/shapes.js' -e 279,328d chisel.html)",
+      "Bash(sed -i -e '252r __TRACKED_VAR__/zones.js' -e 253,265d chisel.html)"
+    ]
+  }
+}
