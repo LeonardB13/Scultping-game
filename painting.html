@@ -1,0 +1,887 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chisel – The Sculptor's Trial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Crimson+Pro:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0f0e0d; --panel:#1c1a18; --panel2:#272320; --line:#4d4538; --text:#efe8da; --muted:#a69d8b;
+    --gold:#d9b05a; --gold2:#8f6a26; --accent:#e8b758; --good:#86c993; --bad:#e0705f;
+    --serif:'Cinzel','Trajan Pro','Palatino Linotype',Georgia,serif;
+    --body:'Crimson Pro','Palatino Linotype',Georgia,serif;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;color:var(--text);font:15px/1.3 var(--body);display:flex;flex-direction:column;overflow:hidden;
+    background:radial-gradient(ellipse at 50% -10%,#3d100c 0,#170808 55%,#0a0405 100%)}
+  button{font:600 13px var(--serif);letter-spacing:.04em;color:var(--text);background:linear-gradient(#34302b,#25221f);border:1px solid #5b5040;border-radius:6px;padding:7px 12px;cursor:pointer;box-shadow:inset 0 1px 0 #ffffff12,0 2px 0 #0008}
+  button:hover:not(:disabled){border-color:var(--gold);color:#fff}
+  button:disabled{opacity:.4;cursor:not-allowed}
+  button.primary{background:linear-gradient(#f0cb7c,#c7973f 55%,#a87b2c);color:#241a08;border-color:#f3d894;text-shadow:0 1px 0 #ffffff55}
+  button.danger{border-color:var(--bad);color:#ffb3a6;background:linear-gradient(#41241f,#2c1815)}
+  header{display:flex;gap:12px;align-items:center;padding:7px 14px;flex:0 0 auto;
+    background:linear-gradient(#26221d,#171512);border-bottom:2px solid var(--gold2);box-shadow:0 2px 0 #000a}
+  header h1{margin:0;font:900 20px var(--serif);letter-spacing:.18em;white-space:nowrap;color:var(--gold);text-shadow:0 2px 0 #000}
+  header h1 small{font:500 10px var(--serif);letter-spacing:.3em;color:var(--muted);margin-left:6px}
+  header .meta{color:var(--muted);white-space:nowrap;font:600 12px var(--serif);letter-spacing:.1em}
+  header .ticker{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted);text-align:center;font-style:italic}
+  header label{display:flex;gap:5px;align-items:center;white-space:nowrap;color:var(--muted);font-size:13px}
+
+  /* ---- layout ---- */
+  #app{flex:1;min-height:0;display:grid;gap:10px;padding:10px;overflow:auto}
+  #app.n2{grid-template-columns:1fr 1fr;grid-template-rows:minmax(520px,1fr)}
+  #app.n3,#app.n4{grid-template-columns:1fr 1fr;grid-template-rows:repeat(2,minmax(520px,1fr))}
+  #app.n3 .pane:nth-child(3){grid-column:1 / -1}
+  @media(max-width:860px){
+    #app,#app.n2,#app.n3,#app.n4{grid-template-columns:1fr;grid-template-rows:none}
+    #app.n3 .pane:nth-child(3){grid-column:auto}
+    .pane{min-height:800px}
+  }
+  .pane{display:flex;flex-direction:column;min-height:0;min-width:0;position:relative;overflow:hidden;
+    background:linear-gradient(#1f1c19,#161412);border:1px solid #3d362b;border-radius:10px;
+    box-shadow:inset 0 0 0 3px #12100e,inset 0 0 0 4px #4a3f2b}
+  .pane.active{box-shadow:inset 0 0 0 3px #12100e,inset 0 0 0 4px var(--gold),0 0 22px #d9b05a33;border-color:var(--gold)}
+  .pane:not(.active) .body{filter:saturate(.7) brightness(.88)}
+  .phead{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 14px 6px;flex:0 0 auto}
+  .phead .name{font:700 16px var(--serif);letter-spacing:.12em;text-transform:uppercase}
+  .pane.active .phead .name{color:var(--gold)}
+  .phead .score{margin-left:auto;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;
+    font:900 20px var(--serif);color:#2a1d07;background:radial-gradient(circle at 35% 30%,#f7dc99,#c9983f 60%,#8f6a26);
+    border:2px solid #f0d28a;box-shadow:0 0 0 2px #1a1409,0 3px 6px #000a}
+  .badge{background:#0006;border:1px solid var(--line);border-radius:3px;padding:1px 8px;font:600 11px var(--serif);letter-spacing:.06em;color:var(--muted);white-space:nowrap}
+  .badge.warn{border-color:var(--bad);color:#ffb3a6}
+
+  .body{flex:1 1 0;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:8px;padding:0 10px 6px}
+  @media(max-width:860px){.body{grid-template-columns:1fr;grid-template-rows:420px auto}}
+
+  /* ---- stage: the carved relief + crack cards below it ---- */
+  .stage{position:relative;min-height:0;display:flex;flex-direction:column;gap:6px;align-items:stretch;padding:8px 6px 6px;border-radius:8px;overflow:hidden;
+    background:radial-gradient(ellipse at 50% 20%,#2a1012 0,#0c0506 75%);border:1px solid #3d362b}
+  .sculpt{flex:1 1 0;min-width:0;min-height:0;display:flex;justify-content:center;align-items:center}
+  .sculpt svg{height:100%;max-width:100%;filter:drop-shadow(0 8px 12px #000d)}
+  .cracks{flex:0 0 auto;display:flex;flex-direction:row;align-items:center;gap:0;padding:0 4px;z-index:1;height:92px;overflow:hidden}
+  .cracks .clabel{font:700 9px var(--serif);letter-spacing:.18em;color:var(--muted);margin-right:10px;writing-mode:vertical-rl;transform:rotate(180deg);text-transform:uppercase;text-align:center}
+  .cracks .clabel.bad{color:#ffb3a6}
+  .cslot{width:62px;height:86px;border:1.5px dashed #5b5040;border-radius:6px;display:grid;place-items:center;text-align:center;color:#6f6656;font:600 9px var(--serif);letter-spacing:.1em;padding:4px}
+  .ccard{width:62px;height:88px;flex:0 0 auto;border-radius:6px;padding:2px;position:relative;
+    background:linear-gradient(145deg,#d9705a,#4a1c14 55%,#d9705a);box-shadow:0 3px 6px #000b}
+  .ccard + .ccard{margin-left:-30px}
+  .ccard:nth-of-type(odd){transform:rotate(-2.5deg)} .ccard:nth-of-type(even){transform:rotate(2.5deg)}
+  .ccard .cin2{height:100%;border-radius:4px;background:linear-gradient(#3b3631,#1e1b18);display:flex;flex-direction:column;align-items:center;overflow:hidden}
+  .ccard .ct{font:700 7px var(--serif);letter-spacing:.14em;color:#ffb3a6;margin-top:3px}
+  .ccard svg{width:100%;flex:1;min-height:0}
+  .ccard .cv{font:900 15px var(--serif);color:#ff9482;text-shadow:0 1px 0 #000;margin-bottom:2px;line-height:1}
+  .ccard.drop{animation:dropin .55s cubic-bezier(.2,1.4,.4,1)}
+  @keyframes dropin{0%{opacity:0;translate:0 -40px;scale:1.4}100%{opacity:1;translate:0 0;scale:1}}
+
+  /* ---- hand: real cards ---- */
+  .hand{min-height:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:minmax(150px,1fr);gap:7px;padding:0}
+  #app.n2 .hand{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #app.n2 .body{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr)}
+  .card{--tc:#999;position:relative;border-radius:8px;padding:3px;min-width:0;min-height:0;
+    background:linear-gradient(145deg,var(--tc),#2c2214 50%,var(--tc));box-shadow:0 3px 7px #000b;transition:transform .15s}
+  .card.t-easy{--tc:#78b583}.card.t-medium{--tc:#e0bd54}.card.t-hard{--tc:#e08545}.card.t-master{--tc:#b56ade}
+  .cin{height:100%;border-radius:6px;display:flex;flex-direction:column;overflow:hidden;
+    background:linear-gradient(#2a2622,#171513);box-shadow:inset 0 0 0 1px #00000099}
+  .ctitle{display:flex;align-items:center;justify-content:space-between;gap:4px;padding:3px 6px 2px;
+    background:linear-gradient(#3c352c,#26211b);border-bottom:1px solid #00000099}
+  .cname{font:700 12px var(--serif);letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .gem{flex:0 0 auto;width:11px;height:11px;transform:rotate(45deg);background:var(--tc);border:1px solid #000a;box-shadow:0 0 6px var(--tc)}
+  .art{position:relative;flex:1 1 0;min-height:56px;margin:3px;border-radius:4px;overflow:hidden;
+    background:radial-gradient(ellipse at 50% 38%,#6a1511 0,#2c080a 62%,#0d0304 100%);box-shadow:inset 0 0 14px #000d,inset 0 0 0 1px #000}
+  .art::before{content:"";position:absolute;inset:0;pointer-events:none;z-index:1;
+    background:repeating-linear-gradient(115deg,#0000 0 6px,#00000022 6px 7px),radial-gradient(ellipse at 50% 50%,#0000 55%,#000a 100%)}
+  .art svg{position:absolute;inset:2px;width:calc(100% - 4px);height:calc(100% - 4px);filter:drop-shadow(0 2px 2px #000a)}
+  .art .ctx{opacity:.4}
+  .card:not(.carved) .art svg{filter:grayscale(.55) brightness(.78) drop-shadow(1px 2px 1px #000a)}
+  .ctype{font:600 8.5px var(--serif);letter-spacing:.16em;text-transform:uppercase;color:var(--tc);text-align:center;padding:0 4px;line-height:1.1}
+  .ctext{margin:3px;padding:3px 4px;border-radius:3px;background:#0e0d0b99;border:1px solid #00000099;display:grid;gap:2px;min-height:38px;align-content:center}
+  .combo{display:flex;justify-content:space-between;gap:4px;align-items:center;font-size:12px;line-height:1.1;padding:1px 4px;border-radius:3px;color:var(--muted);white-space:nowrap}
+  .combo b{font-weight:600;overflow:hidden;text-overflow:ellipsis}
+  .combo em{font:900 11px var(--serif);font-style:normal;color:var(--gold);flex:0 0 auto}
+  .combo.hit{background:var(--good);color:#10230f;font-weight:700;box-shadow:0 0 8px #86c99399}
+  .combo.hit em{color:#10230f}
+  .cnote{font:600 9px var(--serif);letter-spacing:.12em;text-transform:uppercase;text-align:center;color:var(--muted)}
+  .card.avail{box-shadow:0 0 0 1px var(--accent),0 0 12px #e8b75866,0 3px 7px #000b;transform:translateY(-2px)}
+  .card.avail .cnote{color:var(--accent)}
+  .card.locked{opacity:.55}
+  .card.locked .art::after{content:"";position:absolute;inset:0;z-index:2;background:repeating-linear-gradient(45deg,#00000066 0 4px,#0000 4px 8px)}
+  .card.carved{box-shadow:0 0 0 1px #f0d28a,0 0 14px #d9b05a55,0 3px 7px #000b}
+  .card.carved .ctext{background:linear-gradient(#3a2f17aa,#1b150a99);border-color:#6b5320;text-align:center}
+  .card.carved .cnote{color:var(--good)}
+  .seal{position:absolute;right:5px;bottom:5px;z-index:3;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;
+    font:900 12px var(--serif);color:#2a1d07;background:radial-gradient(circle at 35% 30%,#f7dc99,#c9983f 60%,#8f6a26);border:1.5px solid #f0d28a;box-shadow:0 2px 4px #000a}
+  .ok{color:var(--good)!important} .no{color:var(--bad)!important}
+  .wait{color:var(--muted);font-style:italic}
+
+  /* ---- action bar ---- */
+  .actions{flex:0 0 auto;padding:7px 14px 9px;border-top:1px solid #3d362b;background:linear-gradient(#12100e,#181512);min-height:50px}
+  .actions .msg{margin:3px 0 0;color:var(--muted);font-size:14px}
+  .actions .msg b{color:var(--text)}
+  .row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:4px}
+  .dice{display:flex;gap:7px;margin:2px 0 0}
+  .dieWrap{display:flex;flex-direction:column;align-items:center;gap:1px}
+  .die{width:42px;height:42px;background:linear-gradient(145deg,#fbf6ea,#d8cfba);border-radius:9px;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);padding:5px;border:2px solid #6b5c3e;cursor:pointer;box-shadow:inset 0 -3px 0 #0002,0 3px 0 #000a}
+  .die .p{width:8px;height:8px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#5a1d16,#2a0a07);place-self:center}
+  .die.held{border-color:var(--gold);transform:translateY(-4px);background:linear-gradient(145deg,#ffeab8,#e7c378);box-shadow:0 0 10px #d9b05aaa,0 3px 0 #000a}
+  .die.blank{background:#34302b;border-color:#4d4538;cursor:default}
+  .holdTag{font:700 8px var(--serif);letter-spacing:.14em;color:var(--gold);height:11px}
+
+  /* ---- painting layers ---------------------------------------------------
+     every zone is a <g class="part ghost|rough|carved">:
+       .m  base colour   .h form shading   .hl dry-brush highlight   .dk dark line work
+       .sh cast shadow   .gl glowing paint  .bl blood
+     ghost  = charcoal sketch on the primed canvas
+     rough  = flat umber underpainting (some strokes landed)
+     carved = fully rendered (class name kept from the original code = "finished")        */
+  .part .m{stroke:#0b0304;stroke-opacity:.75;stroke-width:.9;stroke-linejoin:round}
+  .part .h{fill:url(#formR);pointer-events:none}
+  .part .hl,.part .dk,.part .bl{fill:none;stroke-linecap:round;stroke-linejoin:round}
+  .part .dk{stroke:#0b0304}
+  .part .bl{stroke:#c4130d;stroke-width:1.5}
+  .part .sh{fill:#08020a}
+  .part .gl{filter:drop-shadow(0 0 3px var(--g,#ff3a22))}
+  .part.ghost .m{fill:none;stroke:#ffdfa0;stroke-opacity:.5;stroke-width:.9;stroke-dasharray:3 3}
+  .part.ghost .h,.part.ghost .hl,.part.ghost .sh,.part.ghost .gl,.part.ghost .bl{display:none}
+  .part.ghost .dk{stroke:#ffdfa0;opacity:.28;stroke-width:.7}
+  .part.rough .m{fill:#4d2c27}
+  .part.rough.r2 .m{fill:#7a483a}
+  .part.rough .hl,.part.rough .gl,.part.rough .bl{display:none}
+  .part.rough .dk{opacity:.4}
+  .part.rough.r2 .hl{display:block;opacity:.3}
+  .part.rough .sh{opacity:.3}
+  .part.glow.carved{filter:drop-shadow(0 0 4px #ff2a1acc)}
+  .part.gold.carved{filter:drop-shadow(0 0 3px #ffb347aa)}
+  .part.gem.carved:not(.fresh){animation:pulse 3.2s ease-in-out infinite}
+  @keyframes pulse{0%,100%{filter:drop-shadow(0 0 2px #ff4d6dcc)}50%{filter:drop-shadow(0 0 8px #ff6f8bff)}}
+  .combo.done{opacity:.55;text-decoration:line-through}
+  .card.partial .art svg{filter:grayscale(.2) brightness(.9) drop-shadow(1px 2px 1px #000a)}
+  .fresh{transform-box:fill-box;transform-origin:center;animation:pop .8s ease-out}
+  @keyframes pop{0%{opacity:0;transform:scale(1.18);filter:brightness(2.5)}60%{opacity:1}100%{transform:scale(1);filter:none}}
+
+  .overlay{position:fixed;inset:0;background:#000c;display:grid;place-items:center;z-index:10;padding:16px}
+  .modal{background:linear-gradient(#25211c,#171512);border:1px solid var(--gold2);box-shadow:inset 0 0 0 3px #12100e,inset 0 0 0 4px #4a3f2b,0 10px 40px #000;border-radius:12px;padding:26px;max-width:560px;width:100%;max-height:90vh;overflow:auto}
+  .modal h2{margin-top:0;font:900 22px var(--serif);letter-spacing:.12em;color:var(--gold)}
+  .modal ul{padding-left:18px;color:var(--muted)}
+  .modal li{margin:4px 0}
+  .modal .logl{display:grid;gap:3px;color:var(--muted);font-size:14px}
+  label.f{display:block;margin:12px 0 4px;color:var(--muted);font:600 11px var(--serif);letter-spacing:.16em;text-transform:uppercase}
+  select{width:100%;padding:7px;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:6px;font:inherit}
+  table{width:100%;border-collapse:collapse;margin:10px 0}
+  td,th{padding:5px 8px;text-align:left;border-bottom:1px solid var(--line)}
+  th{font:600 11px var(--serif);letter-spacing:.12em;color:var(--muted)}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <!-- ===== stone palette: pale marble (lit), mid granite, dark basalt; cool violet shadows ===== -->
+    <linearGradient id="skinG" x1="0" y1="0" x2=".9" y2="1"><stop offset="0" stop-color="#f1e6d4"/><stop offset=".4" stop-color="#c6b9a5"/><stop offset=".75" stop-color="#7d7468"/><stop offset="1" stop-color="#38323a"/></linearGradient>
+    <linearGradient id="hairG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7a7480"/><stop offset=".5" stop-color="#3a3742"/><stop offset="1" stop-color="#0e0c12"/></linearGradient>
+    <linearGradient id="bronzeG" x1="0" y1="0" x2=".9" y2="1"><stop offset="0" stop-color="#f6f0e4"/><stop offset=".35" stop-color="#cfc8bc"/><stop offset=".7" stop-color="#8d8794"/><stop offset="1" stop-color="#3c3948"/></linearGradient>
+    <linearGradient id="goldG" x1="0" y1="0" x2=".8" y2="1"><stop offset="0" stop-color="#fbf4e4"/><stop offset=".4" stop-color="#d8ccb0"/><stop offset=".75" stop-color="#8a8070"/><stop offset="1" stop-color="#3a3430"/></linearGradient>
+    <linearGradient id="steelG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f4f6fa"/><stop offset=".4" stop-color="#b8bcc8"/><stop offset=".75" stop-color="#6a6e80"/><stop offset="1" stop-color="#282a38"/></linearGradient>
+    <linearGradient id="blackG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7a7580"/><stop offset=".4" stop-color="#3a3742"/><stop offset="1" stop-color="#0c0a10"/></linearGradient>
+    <linearGradient id="voidG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#26242c"/><stop offset="1" stop-color="#030204"/></linearGradient>
+    <linearGradient id="leatherG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#b0a498"/><stop offset=".5" stop-color="#625850"/><stop offset="1" stop-color="#1e1a1c"/></linearGradient>
+    <linearGradient id="woodG" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#b4a898"/><stop offset=".5" stop-color="#5e544c"/><stop offset="1" stop-color="#1a1618"/></linearGradient>
+    <linearGradient id="redClothG" x1="0" y1="0" x2=".9" y2="1"><stop offset="0" stop-color="#a8a0a4"/><stop offset=".5" stop-color="#5a5460"/><stop offset="1" stop-color="#18161e"/></linearGradient>
+    <linearGradient id="cloakOlive" x1="0" y1="0" x2=".7" y2="1"><stop offset="0" stop-color="#b0aaa0"/><stop offset=".35" stop-color="#6c6870"/><stop offset=".75" stop-color="#2c2a34"/><stop offset="1" stop-color="#0e0c12"/></linearGradient>
+    <linearGradient id="cloakRed" x1="0" y1="0" x2=".7" y2="1"><stop offset="0" stop-color="#9ea2b4"/><stop offset=".4" stop-color="#5c6074"/><stop offset=".8" stop-color="#24263a"/><stop offset="1" stop-color="#0c0c16"/></linearGradient>
+    <linearGradient id="wrapG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f0e8da"/><stop offset=".55" stop-color="#9a9084"/><stop offset="1" stop-color="#34303a"/></linearGradient>
+    <linearGradient id="crimsonG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#bcb4b0"/><stop offset=".5" stop-color="#6a6470"/><stop offset="1" stop-color="#1c1a22"/></linearGradient>
+    <linearGradient id="bannerG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#aab0c0"/><stop offset=".55" stop-color="#5a5e72"/><stop offset="1" stop-color="#181a28"/></linearGradient>
+    <linearGradient id="petalG" x1=".2" y1="1" x2=".8" y2="0"><stop offset="0" stop-color="#4a4650"/><stop offset=".5" stop-color="#b8b0a8"/><stop offset="1" stop-color="#f6f0e6"/></linearGradient>
+    <linearGradient id="earthG" x1="0" y1="0" x2=".2" y2="1"><stop offset="0" stop-color="#6a666e"/><stop offset="1" stop-color="#0e0c12"/></linearGradient>
+    <linearGradient id="rockG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#a09aa0"/><stop offset="1" stop-color="#1c1a22"/></linearGradient>
+    <linearGradient id="laurelG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f8f0dc"/><stop offset=".5" stop-color="#c4b89c"/><stop offset="1" stop-color="#5a5244"/></linearGradient>
+    <linearGradient id="gemG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f4f0f6"/><stop offset=".45" stop-color="#a49eb0"/><stop offset="1" stop-color="#3a3648"/></linearGradient>
+    <linearGradient id="gemHi" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#cfc8d8"/></linearGradient>
+    <linearGradient id="bladeG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f8faff"/><stop offset=".4" stop-color="#c2c6d2"/><stop offset="1" stop-color="#585c70"/></linearGradient>
+    <linearGradient id="bladeD" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8c8690"/><stop offset="1" stop-color="#26242c"/></linearGradient>
+    <linearGradient id="redFade" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ff3a22" stop-opacity=".95"/><stop offset="1" stop-color="#ff3a22" stop-opacity="0"/></linearGradient>
+    <linearGradient id="formR" x1="0" y1="0" x2="1" y2=".5"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset=".5" stop-color="#1a0405" stop-opacity=".14"/><stop offset="1" stop-color="#080102" stop-opacity=".6"/></linearGradient>
+    <radialGradient id="redGlow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ff5535" stop-opacity=".85"/><stop offset=".55" stop-color="#e41b10" stop-opacity=".28"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>
+    <radialGradient id="canvasBg" cx=".5" cy=".3" r=".8"><stop offset="0" stop-color="#5a1612"/><stop offset=".5" stop-color="#220a0b"/><stop offset="1" stop-color="#070203"/></radialGradient>
+    <radialGradient id="vignette" cx=".5" cy=".46" r=".75"><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".8"/></radialGradient>
+    <linearGradient id="grade" x1="0" y1="0" x2=".7" y2="1"><stop offset="0" stop-color="#ffa860" stop-opacity=".16"/><stop offset=".45" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#100000" stop-opacity=".45"/></linearGradient>
+    <clipPath id="cv"><rect x="0" y="0" width="240" height="300"/></clipPath>
+    <clipPath id="armL"><path d="M84,104 C74,106 66,116 66,134 L62,176 C61,188 66,198 74,198 C83,198 86,188 85,176 L89,136Z"/></clipPath>
+    <clipPath id="armR"><path d="M156,104 C166,106 174,116 174,134 L178,176 C179,188 174,198 166,198 C157,198 154,188 155,176 L151,136Z"/></clipPath>
+
+    <!-- painterly: wobbly brushed edges, streaky impasto texture, soft specular bevel -->
+    <filter id="paint" x="-6%" y="-6%" width="112%" height="112%">
+      <feTurbulence type="fractalNoise" baseFrequency=".035" numOctaves="3" seed="7" result="t"/>
+      <feDisplacementMap in="SourceGraphic" in2="t" scale="3" result="w"/>
+      <feTurbulence type="fractalNoise" baseFrequency=".55 .08" numOctaves="3" seed="2" result="brush"/>
+      <feDiffuseLighting in="brush" surfaceScale="1.1" diffuseConstant="1" lighting-color="#fff" result="bl"><feDistantLight azimuth="225" elevation="60"/></feDiffuseLighting>
+      <feComposite in="w" in2="bl" operator="arithmetic" k1=".28" k2=".8" k3="0" k4="0" result="tex"/>
+      <feGaussianBlur in="w" stdDeviation="1.1" result="b"/>
+      <feSpecularLighting in="b" surfaceScale="3" specularConstant=".45" specularExponent="26" lighting-color="#ffe9c4" result="sp"><feDistantLight azimuth="225" elevation="40"/></feSpecularLighting>
+      <feComposite in="sp" in2="w" operator="in" result="spin"/>
+      <feComposite in="tex" in2="spin" operator="arithmetic" k1="0" k2="1" k3=".3" k4="0"/>
+    </filter>
+    <filter id="brushy" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency=".02 .05" numOctaves="3" seed="4" result="t"/>
+      <feDisplacementMap in="SourceGraphic" in2="t" scale="9"/>
+    </filter>
+    <filter id="weave" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency=".95 .8" numOctaves="2" seed="5" result="n"/>
+      <feColorMatrix in="n" type="matrix" values="0 0 0 0 .5  0 0 0 0 .4  0 0 0 0 .35  0 0 0 1.4 -.45"/>
+    </filter>
+    <filter id="soft"><feGaussianBlur stdDeviation="6"/></filter>
+  </defs>
+</svg>
+<header>
+  <h1>CHISEL<small>THE SCULPTOR'S TRIAL</small></h1>
+  <div class="meta" id="meta"></div>
+  <div class="ticker" id="ticker"></div>
+  <label><input type="checkbox" id="testMode"> Test mode</label>
+  <button data-action="logv">Log</button>
+  <button data-action="rulesv">Rules</button>
+  <button id="newGameBtn">New game</button>
+</header>
+<main id="app"></main>
+<div id="overlay"></div>
+
+<script>
+// ---------- DATA ----------
+const TIERS = {
+  easy:   { label:'Easy' },
+  medium: { label:'Medium' },
+  hard:   { label:'Hard' },
+  master: { label:'Master' },
+};
+const TIER_ORDER = ['easy','medium','hard','master'];
+const COMBO_NAMES = { pair:'Pair', twopair:'Two Pair', triple:'Triple', small:'Small Street', large:'Large Street', full:'Full House', four:'Four of a Kind', five:'Five of a Kind',
+  alleven:'All Even', allodd:'All Odd', sixes:'Three 6s', ones:'Three 1s' };
+const COMBO_SHORT = { pair:'Pair', twopair:'Two Pair', triple:'Triple', small:'Sm. Street', large:'Lg. Street', full:'Full House', four:'4 of a Kind', five:'5 of a Kind',
+  alleven:'All Even', allodd:'All Odd', sixes:'Three 6s', ones:'Three 1s' };
+// Sum combos have the threshold in the id: 'sum24+' = total of 24 or more, 'sum11-' = total of 11 or less
+for(let t=8;t<=27;t++){
+  COMBO_NAMES['sum'+t+'+']='Sum '+t+' or more'; COMBO_SHORT['sum'+t+'+']='Sum '+t+'+';
+  COMBO_NAMES['sum'+t+'-']='Sum '+t+' or less'; COMBO_SHORT['sum'+t+'-']='Sum '+t+'−';
+}
+// Easy/Medium zones: `combos` = two alternatives, carve one (single turn).
+// Hard/Master zones: `strikes` = every strike must be landed, one per turn, in any order. Progress is kept.
+const c_ = (id,pts)=>({id,pts});
+// Every sculpture has the same 5 "body" zones, each in a tier-specific look, plus one Master showpiece.
+const NAMES = {
+  torso:{easy:'Bronze Cuirass', medium:'Scarlet Mail',    hard:'Plumed Pauldrons'},
+  base: {easy:'Barren Ground',  medium:'Blood Blossoms',  hard:'Field of Spears'},
+  legs: {easy:'Tattered Cloak', medium:'Crimson Cloak',   hard:'Mantle of Shards'},
+  arms: {easy:'Bronze Vambraces',medium:'Wrapped Arms',   hard:'Gilded Gauntlets'},
+  head: {easy:'Bare Visage',    medium:'Crested Helm',    hard:'Plumed Warhelm'},
+};
+const CATS = Object.keys(NAMES);
+const COMBO_SETS = {
+  easy:  { torso:[c_('pair',1),c_('twopair',2)], base:[c_('pair',1),c_('sum22+',2)], legs:[c_('pair',1),c_('triple',2)], arms:[c_('pair',1),c_('sum13-',2)], head:[c_('pair',1),c_('small',2)] },
+  medium:{ torso:[c_('triple',3),c_('twopair',4)], base:[c_('twopair',3),c_('sum24+',4)], legs:[c_('allodd',3),c_('sum11-',4)], arms:[c_('alleven',3),c_('sum24+',4)], head:[c_('small',3),c_('full',5)] },
+  hard:  { torso:[c_('triple',4),c_('full',5)], base:[c_('twopair',4),c_('sum11-',4)], legs:[c_('alleven',4),c_('small',4)], arms:[c_('sum24+',4),c_('full',5)], head:[c_('small',4),c_('full',5)] },
+};
+const ZONES = [];
+for(const tier of ['easy','medium','hard']) for(const cat of CATS){
+  const list=COMBO_SETS[tier][cat], z={key:cat+'_'+tier, cat, name:NAMES[cat][tier], tier};
+  if(tier==='hard') z.strikes=list; else z.combos=list;
+  ZONES.push(z);
+}
+[
+  ['wings','Blade Halo',[c_('sixes',5),c_('alleven',4),c_('large',6)]],
+  ['crown','Laurel Crown',[c_('four',6),c_('large',7),c_('sixes',5)]],
+  ['heart','Blood Sigil',[c_('full',6),c_('sum26+',7),c_('allodd',5)]],
+  ['sword','Gladius',[c_('four',6),c_('full',5),c_('sum26+',7)]],
+  ['shield','Legion Banner',[c_('full',5),c_('allodd',4),c_('ones',5)]],
+  ['staff','War Spear',[c_('large',7),c_('sum11-',6),c_('small',5)]],
+].forEach(([key,name,strikes])=>ZONES.push({key,cat:key,name,tier:'master',strikes}));
+const comboList = z => z.strikes || z.combos;
+const START_TOOLS = 2, MAX_TOOLS = 3, CRACK_CAP = 2, REROLLS = 2;
+const PIPS = {1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]};
+
+// =====================================================================
+//  PAINTING ART  (viewBox 0 0 240 300)
+//  Dark-fantasy legionary: laurel / crest / plume, red blade halo, long cloak.
+// =====================================================================
+const f1 = n => Math.round(n*10)/10;
+const rng = seed => { let s=(seed>>>0)||1; return ()=>{ s=(Math.imul(s,1664525)+1013904223)>>>0; return s/4294967296; }; };
+// layers
+const M  = (d,mat='bronzeG') => `<path class="m" fill="url(#${mat})" d="${d}"/><path class="h" d="${d}"/>`;
+const HL = (d,col='#ffd6a0',w=1.3,op=.6) => `<path class="hl" d="${d}" stroke="${col}" stroke-width="${w}" opacity="${op}"/>`;
+const DK = (d,w=1.2,op=.7) => `<path class="dk" d="${d}" stroke-width="${w}" opacity="${op}"/>`;
+const SH = (d,op=.5) => `<path class="sh" d="${d}" opacity="${op}"/>`;
+const GL = (d,fill,op=1,glow='#ff3a22') => `<path class="gl" style="--g:${glow}" d="${d}" fill="${fill}" opacity="${op}"/>`;
+const BL = d => `<path class="bl" d="${d}"/>`;
+const circ = (x,y,r) => `M${f1(x-r)},${f1(y)} a${r},${r} 0 1,0 ${2*r},0 a${r},${r} 0 1,0 ${-2*r},0Z`;
+// mirror by rewriting coordinates (not a transform) so gradients keep the light on the upper-left. Absolute path commands only.
+const flip = s => s.replace(/(-?\d+\.?\d*),(-?\d+\.?\d*)/g,(m,x,y)=>`${f1(240-x)},${y}`);
+const mir = s => s + flip(s);
+const grp = (c,inner,k='') => `<g class="part ${k} ${c}">${inner}</g>`;
+
+// ---------- shared pieces ----------
+const NECK = M('M109,84 L108,102 L132,102 L131,84Z','skinG') + SH('M122,84 L131,84 L132,102 L120,102Z',.5);
+
+// shoulder plates (left, mirrored by caller)
+const shoulders = (n,mat) => { let s=''; for(let i=0;i<n;i++){ const y=i*9, x=i*2;
+  s += M(`M${70-x},${104+y} C${74-x},${93+y} 92,${90+y} 104,${96+y} L103,${107+y} C92,${101+y} ${80-x},${103+y} ${68-x},${114+y}Z`,mat)
+     + HL(`M${72-x},${103+y} C80,${95+y} 92,${94+y} 100,${98+y}`,'#ffe6b8',1.2,.75)
+     + DK(`M${70-x},${112+y} C80,${106+y} 92,${104+y} 102,${107+y}`,1,.5); }
+  return mir(s); };
+// leather skirt strips (pteruges)
+const pter = mat => { let s=''; for(let i=0;i<8;i++){ const x=88+i*8;
+  s += M(`M${f1(x)},180 L${f1(x+8)},180 L${f1(x+7.2)},210 Q${f1(x+4)},214 ${f1(x+.8)},210Z`,mat) + DK(`M${f1(x+4)},186 L${f1(x+4)},206`,.8,.45) + HL(`M${f1(x+1.4)},184 L${f1(x+1.1)},206`,'#e8b070',.7,.35); }
+  return s; };
+const CHEST = 'M88,100 C102,93 138,93 152,100 L158,124 C156,146 151,164 148,182 L92,182 C89,164 84,146 82,124Z';
+const CHEST_SH = 'M128,98 L152,100 L158,124 C156,146 151,164 148,182 L128,182 C136,150 136,120 128,98Z';
+const belt = (studs) => { let s = M('M86,176 L154,176 L154,187 L86,187Z','leatherG') + M('M113,174 L127,174 L127,189 L113,189Z','goldG') + DK('M118,178 L122,178 L122,185 L118,185Z',.8,.6);
+  if(studs) for(let i=0;i<7;i++){ if(i===3) continue; s+=M(circ(f1(92+i*9.3),181.5,1.9),'goldG'); } return s; };
+
+// feathers streaming off the shoulder (left, mirrored)
+const feathers = () => { const r=rng(9); let s=''; const n=15;
+  for(let i=0;i<n;i++){ const a=(238-110*i/(n-1))*Math.PI/180, L=24+r()*20, ux=Math.cos(a), uy=Math.sin(a), vx=-uy, vy=ux, sx=88, sy=106, w=3+r()*2.5;
+    const tx=sx+ux*L, ty=sy+uy*L;
+    const b1=`${f1(sx+vx*w)},${f1(sy+vy*w)}`, b2=`${f1(sx-vx*w)},${f1(sy-vy*w)}`;
+    const m1=`${f1(sx+ux*L*.5+vx*w*2.2)},${f1(sy+uy*L*.5+vy*w*2.2)}`, m2=`${f1(sx+ux*L*.55-vx*w*1.6)},${f1(sy+uy*L*.55-vy*w*1.6)}`;
+    s += M(`M${b1} Q${m1} ${f1(tx)},${f1(ty)} Q${m2} ${b2}Z`,'blackG') + HL(`M${b1} Q${m1} ${f1(tx)},${f1(ty)}`, i%3?'#c8943c':'#ff7a50',.8,.6); }
+  return mir(s); };
+
+// ---------- arms ----------
+const ARM = 'M84,104 C74,106 66,116 66,134 L62,176 C61,188 66,198 74,198 C83,198 86,188 85,176 L89,136Z';
+const armPair = s => s + flip(s).replace(/armL/g,'armR');
+// ---------- cloak ----------
+const cloakPath = (n,amp,seed) => { const r=rng(seed); let s='M86,100 C74,150 40,222 4,288';
+  for(let i=1;i<=n;i++){ const x=4+200*i/n, y=288+(i%2?amp*(.3+r()):-amp*r()*.4); s+=` L${f1(x)},${f1(y)}`; }
+  return s+' C190,230 170,150 154,100Z'; };
+const folds = (n,seed,light='#ffcf8a') => { const r=rng(seed); let s='';
+  for(let i=0;i<n;i++){ const t=94+i*(60/(n-1)), b=14+i*(185/(n-1)), b2=b+(r()*10-5), e=280+r()*6;
+    s += DK(`M${f1(t)},108 C${f1(t+(b-t)*.15)},170 ${f1(t+(b-t)*.6)},230 ${f1(b2)},${f1(e)}`,1.5+r()*1.7,.3+r()*.3);
+    s += HL(`M${f1(t-3)},112 C${f1(t+(b-t)*.15-3)},170 ${f1(t+(b-t)*.6-3)},230 ${f1(b2-3)},${f1(e-2)}`,light,1,.16+r()*.22); }
+  return s; };
+const CLOAK_SH = 'M128,100 L154,100 C170,150 190,230 204,288 L160,288 C156,220 138,150 128,100Z';
+
+// ---------- head helpers ----------
+const plume = () => { const r=rng(13); let s=''; const n=15;
+  for(let i=0;i<n;i++){ const a=(-90-62+124*i/(n-1))*Math.PI/180, L=46+r()*26, bx=120+(i-7)*1.6, by=36, ux=Math.cos(a), uy=Math.sin(a), vx=-uy, vy=ux, w=3.2+r()*1.6;
+    const tx=bx+ux*L, ty=by+uy*L; const bend=(i-7)*.9;
+    const m1=`${f1(bx+ux*L*.55+vx*(w*2+bend))},${f1(by+uy*L*.55+vy*(w*2+bend))}`, m2=`${f1(bx+ux*L*.5-vx*(w*1.6-bend))},${f1(by+uy*L*.5-vy*(w*1.6-bend))}`;
+    s += M(`M${f1(bx+vx*w)},${f1(by+vy*w)} Q${m1} ${f1(tx)},${f1(ty)} Q${m2} ${f1(bx-vx*w)},${f1(by-vy*w)}Z`,'blackG')
+       + HL(`M${f1(bx+vx*w)},${f1(by+vy*w)} Q${m1} ${f1(tx)},${f1(ty)}`, i%2?'#b07a40':'#7a2418',.9,.55); }
+  return s; };
+const crestHairs = () => { let s=''; for(let i=0;i<22;i++){ const x=98+i*2.1; s += DK(`M${f1(x)},${f1(34-Math.sin(i/21*Math.PI)*4)} L${f1(x+(i-10)*.9)},${f1(18-Math.sin(i/21*Math.PI)*8)}`,.8,.4); } return s; };
+
+// ---------- flowers / blots ----------
+const flower = (x,y,s,rot,seed) => { const r=rng(seed); let out=''; const n=6;
+  for(let i=0;i<n;i++){ const a=rot+i*(360/n)+(r()*14-7), sc=s*(.9+r()*.28);
+    out += `<g transform="translate(${x} ${y}) rotate(${f1(a)}) scale(${f1(sc)})">`
+      + `<path class="m" fill="url(#petalG)" d="M0,0 C-16,-8 -19,-34 0,-46 C19,-34 16,-8 0,0Z"/><path class="h" d="M0,0 C-16,-8 -19,-34 0,-46 C19,-34 16,-8 0,0Z"/>`
+      + `<path class="dk" stroke-width="1" opacity=".45" d="M0,-6 L0,-38 M0,-14 L-7,-26 M0,-14 L7,-26 M0,-24 L-4,-32 M0,-24 L4,-32"/>`
+      + `<path class="hl" stroke="#ffc2b0" stroke-width="1.6" opacity=".5" d="M-9,-30 C-7,-38 -3,-42 0,-43"/></g>`; }
+  out += `<g transform="translate(${x} ${y}) scale(${s})"><path class="m" fill="url(#voidG)" d="${circ(0,0,6)}"/>`
+      + `<path class="gl" style="--g:#ffb347" fill="#ffd45a" d="${circ(-2,-1.5,1)}${circ(2.5,-2,.9)}${circ(0,2.4,.9)}"/></g>`;
+  return out; };
+const stems = (list) => list.map(([x,h,rr])=>HL(`M${x},300 C${x+4},${300-h*.5} ${x-3},${300-h*.8} ${x},${300-h}`,'#b8281c',1.1,.8)+`<path class="hl" d="${circ(x,300-h-rr,rr)}" stroke="#d63a2a" stroke-width="1" opacity=".85"/><path class="hl" d="${circ(x,300-h-rr,rr*.45)}" stroke="#d63a2a" stroke-width=".9" opacity=".85"/>`).join('');
+// cracks split the stone: jagged black fissure with a glowing red core and side branches
+const crackMark = (x,y,s,v) => { const d='M0,-34 L-5,-22 L4,-13 L-6,-1 L3,10 L-4,22 L2,34', br='M4,-13 L15,-9 L19,-1 M-6,-1 L-17,3 L-20,12 M3,10 L12,16';
+  return `<g transform="translate(${x} ${y}) scale(${s*(v%2?1:-1)} ${s})"><path d="${d} ${br}" fill="none" stroke="#050204" stroke-width="3.2" stroke-linejoin="bevel" stroke-linecap="round"/>`
+   + `<path d="${d} ${br}" fill="none" stroke="#ff6a40" stroke-width=".9" stroke-linejoin="bevel" opacity=".85" style="filter:drop-shadow(0 0 2px #ff3a22)"/></g>`; };
+
+// ---------- blade halo ----------
+const sw = (px,py,tx,ty,w) => { const L=Math.hypot(tx-px,ty-py), ux=(tx-px)/L, uy=(ty-py)/L, vx=-uy, vy=ux;
+  const P=(a,b)=>`${f1(px+ux*a+vx*b)},${f1(py+uy*a+vy*b)}`;
+  const pr=w*.95;
+  return M(`M${P(3.2*w,-.95*w)} L${P(L,0)} L${P(3.2*w,.95*w)}Z`,'bladeG')
+    + M(`M${P(2.4*w,-1.8*w)} L${P(3.2*w,-1.8*w)} L${P(3.2*w,1.8*w)} L${P(2.4*w,1.8*w)}Z`,'bladeG')
+    + M(`M${P(.8*w,-.45*w)} L${P(2.4*w,-.45*w)} L${P(2.4*w,.45*w)} L${P(.8*w,.45*w)}Z`,'bladeD')
+    + M(circ(px+ux*-.1*w,py+uy*-.1*w,pr),'bladeG')
+    + HL(`M${P(3.4*w,-.45*w)} L${P(L*.94,0)}`,'#ffd0b0',.9,.75)
+    + HL(`M${P(-1.2*w,0)} L${P(-16,0)}`,'#ff4a30',1.3,.35); };
+const HALO = [[4,70,86,84,4.2],[-8,120,70,132,3.8],[10,30,96,62,4.4],[28,10,94,44,3.6],[188,-4,150,46,4],[234,30,160,64,4],[240,90,172,100,3.8],[238,142,176,134,3.8],[-8,170,60,166,4],[20,210,66,198,3.6]];
+
+// ---------- the parts ----------
+const SHAPES = {
+  // ============ BASE (foreground) ============
+  base_easy: c=>{ const r=rng(2); let g='';
+    for(let i=0;i<24;i++){ const x=i*10.2+r()*4; g+=DK(`M${f1(x)},278 Q${f1(x+3)},${f1(266-r()*6)} ${f1(x+r()*10-4)},${f1(254-r()*10)}`,1.1,.55); }
+    for(let i=0;i<9;i++){ const x=10+i*27+r()*10; g+=HL(`M${f1(x)},277 Q${f1(x+3)},268 ${f1(x+r()*8-3)},${f1(258-r()*6)}`,'#8a3a2c',.8,.5); }
+    let em=''; for(let i=0;i<9;i++) em+=circ(10+r()*220,272+r()*20,.5+r()*.8);
+    return grp(c,
+      M('M0,300 L0,276 C24,267 44,279 70,272 C100,264 130,279 160,272 C190,265 214,275 240,270 L240,300Z','earthG')+
+      M('M24,284 L34,274 L48,276 L56,286Z','rockG')+M('M168,282 L176,272 L194,274 L200,286Z','rockG')+M('M100,290 L108,282 L122,284 L126,292Z','rockG')+
+      SH('M0,292 L240,288 L240,300 L0,300Z',.5)+g+GL(em,'#ff6a3a',.9,'#ff5a2a')); },
+  base_medium: c=>grp(c,
+    M('M0,300 L0,280 C30,272 60,282 90,277 C120,272 150,282 180,277 C205,272 224,278 240,274 L240,300Z','earthG')+
+    stems([[70,38,4],[96,50,3.5],[148,44,4],[176,34,3.5]])+
+    flower(30,276,1,-10,4)+flower(208,278,1.05,8,6)+flower(120,300,.85,0,9)),
+  base_hard: c=>{ let tri=''; for(let i=0;i<6;i++){ const x=14+i*38; tri+=M(`M${x},262 L${x+22},262 L${x+11},288Z`,i%2?'bannerG':'blackG')+HL(`M${x},262 L${x+22},262 L${x+11},288Z`,'#e8b658',.9,.75); }
+    let dia=''; for(let i=0;i<10;i++){ const x=22+i*21.8; dia+=`M${x},294 l3,-3 3,3 -3,3Z `; }
+    return grp(c,
+      M('M0,300 L0,282 C30,274 60,284 90,279 C120,274 150,284 180,279 C205,274 224,280 240,276 L240,300Z','earthG')+tri+
+      M('M0,262 L240,262 L240,264 L0,264Z','goldG')+
+      flower(24,282,.75,-6,12)+flower(216,284,.8,10,14)+
+      HL(dia,'#e8b658',1,.9)+`<path class="gl" style="--g:#ffb347" fill="#e8b658" opacity=".85" d="${dia}"/>`,'gold'); },
+
+  // ============ LEGS = CLOAK ============
+  legs_easy: c=>grp(c,
+    M(cloakPath(16,6,3),'cloakOlive')+folds(10,4)+SH(CLOAK_SH,.5)+HL('M6,284 C60,262 100,240 120,222','#ffe0a0',1.2,.14)),
+  legs_medium: c=>grp(c,
+    M(cloakPath(7,2.5,5),'cloakRed')+folds(9,6,'#ff9a70')+SH(CLOAK_SH,.5)+
+    HL('M86,100 C74,150 40,222 4,288','#e8b658',1.8,.85)+HL('M204,288 C190,230 170,150 154,100','#e8b658',1.8,.85)+
+    HL('M8,282 C60,286 150,286 200,282','#e8b658',1.4,.75)+DK('M8,285 C60,289 150,289 200,285',1,.6)),
+  legs_hard: c=>{ let sh='',core=''; [20,52,86,126,160,190].forEach((x,i)=>{ sh+=GL(`M${x},292 L${x-26},${250-(i%2)*14} L${x+16},292Z`,'#ff2a1a',.85); core+=GL(`M${x},292 L${x-14},${268-(i%2)*8} L${x+8},292Z`,'#ff9a70',.7,'#ff6a3a'); });
+    return grp(c,
+      M(cloakPath(20,8,8),'cloakOlive')+folds(12,9)+SH(CLOAK_SH,.5)+
+      GL('M114,190 L126,190 L136,292 L104,292Z','url(#redFade)',1,'#ff2a1a')+sh+core,'glow'); },
+
+  // ============ ARMS ============
+  arms_easy: c=>grp(c, armPair(`<g clip-path="url(#armL)">`+
+      M(ARM,'skinG')+M('M62,146 L88,144 L86,180 L61,182Z','bronzeG')+
+      DK('M62,152 L87,150')+DK('M62,170 L86,168')+HL('M66,148 L64,178','#ffe6b8',1.5,.6)+
+      DK('M66,186 L67,196')+DK('M71,187 L72,198')+DK('M76,187 L77,198')+SH('M78,104 L89,136 L85,180 L75,180Z',.4)+
+      M(circ(66,155,1.4),'goldG')+M(circ(66,173,1.4),'goldG')+`</g>`)),
+  arms_medium: c=>{ let w=''; for(let i=0;i<14;i++){ const y=108+i*6.5; w+=DK(`M60,${f1(y+6)} L92,${f1(y-4)}`,1.1,.55)+HL(`M60,${f1(y+8)} L92,${f1(y-2)}`,'#fff2d6',.8,.3); }
+    return grp(c, armPair(`<g clip-path="url(#armL)">`+
+      M(ARM,'wrapG')+w+M('M62,150 L88,148 L86,172 L61,174Z','steelG')+HL('M65,152 L64,172','#fff',1.4,.6)+DK('M61,174 L86,172',1.4,.8)+
+      SH('M78,104 L89,136 L85,180 L75,180Z',.45)+`</g>`)); },
+  arms_hard: c=>grp(c, armPair(`<g clip-path="url(#armL)">`+
+      M(ARM,'blackG')+M('M60,140 L90,138 L86,182 L58,184Z','goldG')+
+      DK('M62,150 L88,148',1)+DK('M62,162 L87,160',1)+HL('M64,142 L61,180','#fffbe0',1.6,.8)+
+      DK('M66,188 L67,197',1,.7)+DK('M72,188 L73,198',1,.7)+DK('M78,188 L79,196',1,.7)+`</g>`+
+      M('M66,126 L50,116 L68,134Z','goldG')+M('M64,140 L46,136 L65,148Z','goldG'))),
+
+  // ============ TORSO = ARMOUR ============
+  torso_easy: c=>grp(c,
+    pter('leatherG')+M(CHEST,'bronzeG')+SH(CHEST_SH,.5)+
+    DK('M100,110 C106,123 114,125 120,118',1.3,.65)+DK('M140,110 C134,123 126,125 120,118',1.3,.65)+DK('M120,118 L120,176',1.3,.6)+
+    DK('M104,140 L136,140',1.2,.5)+DK('M105,156 L135,156',1.2,.5)+DK('M96,128 C102,134 108,136 114,134',1,.4)+DK('M144,128 C138,134 132,136 126,134',1,.4)+
+    HL('M88,106 C84,126 84,150 88,172','#ffe6b8',2,.4)+HL('M98,112 C102,120 108,124 114,124','#ffe6b8',1.3,.5)+
+    shoulders(3,'bronzeG')+belt(false)),
+  torso_medium: c=>{ let bands='',studs=''; for(let i=0;i<4;i++) bands+=M(`M${f1(84+i*2.2)},${114+i*16} Q120,${122+i*16} ${f1(156-i*2.2)},${114+i*16} L${f1(156-i*2.2)},${121+i*16} Q120,${129+i*16} ${f1(84+i*2.2)},${121+i*16}Z`,"bronzeG")+HL(`M${f1(87+i*2.2)},${114+i*16} Q120,${122+i*16} ${f1(153-i*2.2)},${114+i*16}`,'#ffe6b8',1,.6);
+    for(let i=0;i<6;i++) studs+=M(circ(f1(99+i*8.6),f1(106+i*13.8),2.3),'steelG');
+    return grp(c,
+      pter('leatherG')+M(CHEST,'redClothG')+bands+SH(CHEST_SH,.5)+
+      M('M90,98 L104,98 L152,184 L138,186Z','leatherG')+studs+HL('M92,99 L139,183','#e8a060',.9,.4)+
+      shoulders(2,'bronzeG')+belt(true)); },
+  torso_hard: c=>grp(c,
+    feathers()+pter('blackG')+M(CHEST,'blackG')+SH(CHEST_SH,.45)+
+    mir(HL('M92,108 C98,126 98,150 94,176','#e8b658',1.2,.7))+
+    HL('M100,112 L120,128 L140,112','#e8b658',1.8,.85)+HL('M100,126 L120,142 L140,126','#e8b658',1.5,.7)+HL('M100,140 L120,156 L140,140','#e8b658',1.2,.55)+
+    DK('M120,100 L120,176',1.2,.6)+HL('M86,104 C82,126 82,150 86,174','#ff9a70',1.6,.3)+
+    shoulders(1,'goldG')+belt(true)+HL('M86,168 C100,176 140,176 154,168','#e8b658',1,.6),'gold'),
+
+  // ============ HEAD ============
+  head_easy: c=>grp(c,
+    NECK+
+    M('M100,58 C99,42 108,33 120,33 C132,33 141,42 140,58 C140,72 134,84 127,88 C123,91 117,91 113,88 C106,84 100,72 100,58Z','skinG')+
+    SH('M122,36 C136,38 141,46 140,58 C140,72 134,84 127,88 C124,90 121,90 121,90 C130,76 130,50 122,36Z',.55)+
+    M('M99,56 C97,38 108,28 121,29 C134,30 143,40 141,57 C139,47 132,42 122,41 C112,41 103,46 99,56Z','hairG')+
+    HL('M104,48 C106,40 112,34 121,33','#ffe6b8',1.4,.55)+
+    DK('M105,54 Q111,50 117,54',1.6,.8)+DK('M124,54 Q130,50 136,54',1.6,.8)+
+    GL('M108,59 Q112,56 117,59 Q112,62 108,59Z','#ff3b2a',1,'#ff2a1a')+GL('M125,59 Q130,56 134,59 Q130,62 125,59Z','#c4180f',.8,'#ff2a1a')+
+    BL('M112,61 C113,70 111,78 112,90')+
+    DK('M120,60 L116,73 L122,74',1.1,.6)+DK('M112,81 Q120,84 128,81',1.3,.7)+DK('M106,70 C108,76 112,80 114,81',.9,.35),'head'),
+  head_medium: c=>grp(c,
+    M('M88,42 C94,8 146,8 152,42 L144,40 C140,20 100,20 96,40Z','crimsonG')+crestHairs()+
+    NECK+
+    M('M97,62 C95,38 106,27 120,27 C134,27 145,38 143,62 C143,76 140,84 134,92 C130,96 124,99 120,99 C116,99 110,96 106,92 C100,84 97,76 97,62Z','bronzeG')+
+    M('M107,52 L133,52 L133,60 L124,60 L124,88 L116,88 L116,60 L107,60Z','voidG')+
+    GL(circ(112,56,1.8),'#ff3b2a',1,'#ff2a1a')+GL(circ(128,56,1.8),'#ff3b2a',1,'#ff2a1a')+
+    HL('M101,50 C103,38 110,31 120,30','#fff0c8',1.6,.8)+HL('M100,66 C101,78 104,86 110,92','#ffe6b8',1,.4)+
+    DK('M98,66 C100,80 104,88 110,94',1.2,.6)+DK('M142,66 C140,80 136,88 130,94',1.2,.6)+
+    M(circ(101,60,1.5),'goldG')+M(circ(139,60,1.5),'goldG')+
+    SH('M130,30 C142,36 143,50 143,62 C143,76 140,84 134,92 C130,96 124,99 120,99 C132,84 136,50 130,30Z',.5),'head'),
+  head_hard: c=>grp(c,
+    plume()+
+    M('M100,52 L82,43 L99,62Z','goldG')+M('M140,52 L158,43 L141,62Z','goldG')+
+    NECK+
+    M('M100,62 C98,38 108,28 120,28 C132,28 142,38 140,62 L138,84 C134,92 106,92 102,84Z','blackG')+
+    M('M104,72 L136,72 L130,90 L120,95 L110,90Z','blackG')+
+    M('M106,61 L134,61 L132,70 L108,70Z','voidG')+GL('M110,64.5 L130,64.5 L129,67.5 L111,67.5Z','#ff9a2a',1,'#ff8a1a')+
+    HL('M100,56 C108,49 132,49 140,56','#e8b658',1.5,.8)+HL('M103,40 C106,33 112,30 120,30','#ffe6b8',1.4,.5)+
+    DK('M114,74 L116,90 M126,74 L124,90 M120,72 L120,94',.9,.5)+
+    mir(HL('M101,66 C101,76 104,84 108,88','#c8943c',1,.5))+
+    HL('M120,35 L120,31 M113,38 L109,34 M127,38 L131,34 M110,44 L105,43 M130,44 L135,43',  '#ffe28a',1,.8)+
+    GL(circ(120,44,4.6),'#ffd45a',1,'#ffb347')+GL(circ(120,44,2.2),'#fff6c0',1,'#ffffff'),'head gold'),
+
+  // ============ MASTER PIECES ============
+  wings: c=>grp(c, HALO.map(a=>sw(...a)).join(''),'glow'),
+  crown: c=>{ let s=''; for(let i=0;i<=10;i++){ const th=Math.PI+i*Math.PI/10, x=120+Math.cos(th)*26, y=45+Math.sin(th)*14;
+      let ang=Math.atan2(Math.cos(th)*14,-Math.sin(th)*26)*180/Math.PI; if(i>5) ang+=180;
+      for(const side of [-1,1]) s+=`<path class="m" fill="url(#laurelG)" transform="translate(${f1(x)} ${f1(y)}) rotate(${f1(ang+side*32)}) scale(1.15)" d="M0,0 C3,-3.4 9,-3.4 13,0 C9,3.4 3,3.4 0,0Z"/>`
+         + `<path class="dk" transform="translate(${f1(x)} ${f1(y)}) rotate(${f1(ang+side*32)}) scale(1.15)" stroke-width=".6" opacity=".5" d="M1,0 L11,0"/>`; }
+    s+=GL(circ(120,32,1.8),'#fff0b0',1,'#ffb347')+GL(circ(95,46,1.4),'#fff0b0',.9,'#ffb347')+GL(circ(145,46,1.4),'#fff0b0',.9,'#ffb347');
+    return grp(c,s,'gold'); },
+  heart: c=>grp(c,
+    GL(circ(120,134,19),'url(#redGlow)',.75,'#ff2a1a')+
+    M('M120,119 L135,147 L105,147Z','gemG')+M('M120,128 L128,142 L112,142Z','gemHi')+
+    DK('M120,119 L120,147 M105,147 L120,134 L135,147',.8,.5)+
+    HL('M120,119 L135,147 L105,147Z','#ffd0d8',1.1,.85)+HL(circ(120,134,17),'#e8b658',.7,.65),'gem'),
+  sword: c=>grp(c,`<g transform="rotate(-18 166 190)">`+
+    M('M161,204 L171,204 L170,262 L166,284 L162,262Z','steelG')+DK('M166,208 L166,270',1,.5)+HL('M162.8,206 L163,262','#ffffff',1,.85)+
+    GL('M170,206 L170.4,262 L166,282','none',.6,'#ff3a22')+
+    M('M152,198 L180,198 L180,204 L152,204Z','goldG')+M(circ(152,201,2.4),'goldG')+M(circ(180,201,2.4),'goldG')+
+    M('M163,178 L169,178 L169,198 L163,198Z','leatherG')+DK('M163,182 L169,184 M163,187 L169,189 M163,192 L169,194',.8,.6)+
+    M(circ(166,176,4.6),'goldG')+`</g>`,'glow'),
+  shield: c=>grp(c,
+    M('M29,52 L33,52 L33,284 L29,284Z','woodG')+M('M12,62 L76,62 L76,68 L12,68Z','goldG')+M('M31,42 L35,49 L31,56 L27,49Z','goldG')+
+    M('M18,68 L70,68 L70,140 L58,131 L44,148 L32,133 L18,144Z','bannerG')+
+    DK('M26,70 L25,138',1.2,.4)+DK('M40,70 L40,140',1.2,.35)+DK('M54,70 L55,134',1.2,.4)+HL('M22,70 L21,140','#ff8a70',1,.3)+
+    HL('M28,82 L60,82 L44,106Z','#e8b658',1.3,.85)+HL('M33,112 L55,112 L44,128Z','#e8b658',1.1,.7)+
+    M('M12,64 l-4,0 0,10 4,-3Z','goldG')+M('M76,64 l4,0 0,10 -4,-3Z','goldG')),
+  staff: c=>grp(c,
+    M('M212,34 L217,34 L217,292 L212,292Z','woodG')+DK('M212,90 L217,92 M212,150 L217,152 M212,210 L217,212',1,.5)+HL('M213,36 L213,290','#d6a070',.9,.4)+
+    M('M214.5,0 C225,16 224,34 214.5,46 C205,34 204,16 214.5,0Z','steelG')+DK('M214.5,4 L214.5,44',1,.5)+HL('M210,18 C210,28 211,36 213,42','#fff',1,.7)+
+    M('M208,42 L221,42 L220,53 L209,53Z','goldG')+
+    M('M213,55 C203,66 206,84 199,98 C210,90 212,78 216,68Z','crimsonG')+M('M216,56 C224,68 222,82 228,94 C220,88 217,78 215,68Z','crimsonG')),
+};
+const DRAW_ORDER = ['wings','staff','shield','legs','arms','torso','head','crown','heart','sword','base'];
+// card framing per zone (+ dimmed context piece for master items)
+const ART = {
+  base:{vb:'0 246 240 54'}, legs:{vb:'0 92 218 200'}, arms:{vb:'48 98 144 108'}, torso:{vb:'44 84 152 134'},
+  head:{vb:'80 -16 80 118'}, wings:{vb:'0 0 240 214'},
+  crown:{vb:'84 14 72 48',ctx:'head_easy'}, heart:{vb:'80 100 80 66',ctx:'torso_easy'},
+  sword:{vb:'120 160 100 130',ctx:'arms_easy'}, shield:{vb:'4 38 84 114'}, staff:{vb:'188 -2 52 116'},
+};
+
+// ---------- HELPERS ----------
+const zoneOf = k => ZONES.find(z=>z.key===k);
+const d6 = () => 1+Math.floor(Math.random()*6);
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function dealHand(){
+  // every sculpture gets each body zone once (random tier => random look) plus one master showpiece
+  const tiers=['easy','easy','medium','medium','hard'];
+  let picks=shuffle(CATS).map((cat,i)=>zoneOf(cat+'_'+tiers[i]));
+  picks.push(shuffle(ZONES.filter(z=>z.tier==='master'))[0]);
+  picks.sort((a,b)=>TIER_ORDER.indexOf(a.tier)-TIER_ORDER.indexOf(b.tier) || ZONES.indexOf(a)-ZONES.indexOf(b));
+  return picks.map(z=>({key:z.key,carved:false,pts:0,done:z.strikes?z.strikes.map(()=>false):null}));
+}
+function counts(dice){const c=[0,0,0,0,0,0,0];dice.forEach(v=>c[v]++);return c}
+function matches(id,dice){
+  const c=counts(dice), mx=Math.max(...c), u=[...new Set(dice)].sort((a,b)=>a-b);
+  const sum=dice.reduce((s,v)=>s+v,0);
+  if(id.startsWith('sum')){ const th=parseInt(id.slice(3)); return id.endsWith('+') ? sum>=th : sum<=th; }
+  const run=n=>{let best=1,cur=1;for(let i=1;i<u.length;i++){cur=(u[i]===u[i-1]+1)?cur+1:1;best=Math.max(best,cur)}return best>=n};
+  switch(id){
+    case 'pair': return mx>=2;
+    case 'triple': return mx>=3;
+    case 'four': return mx>=4;
+    case 'five': return mx===5;
+    case 'small': return run(4);
+    case 'large': return run(5);
+    case 'full': return c.includes(3)&&c.includes(2);
+    case 'twopair': return c.filter(x=>x>=2).length>=2;
+    case 'alleven': return dice.every(v=>v%2===0);
+    case 'allodd': return dice.every(v=>v%2===1);
+    case 'sixes': return c[6]>=3;
+    case 'ones': return c[1]>=3;
+  }
+}
+const crackCost = n => Math.min(n, CRACK_CAP);
+
+// ---------- STATE ----------
+let G=null;
+function newGame(n,rounds){
+  G={
+    players:Array.from({length:n},(_,i)=>({name:'Player '+(i+1),hand:dealHand(),cracks:0,penalty:0,tools:START_TOOLS,sabotage:0})),
+    cur:0, round:1, maxRounds:rounds, phase:'start', turn:null, log:[], over:false, fresh:null
+  };
+  freshTurn();
+  log('Game started: '+n+' players, '+rounds+' rounds, '+START_TOOLS+' Tools each.');
+  render();
+}
+function freshTurn(){ G.turn={dice:[1,1,1,1,1],held:[0,0,0,0,0],rerolls:REROLLS,sab:null}; G.phase='start'; }
+const P = () => G.players[G.cur];
+function log(s){G.log.unshift(s)}
+const remaining = p => p.hand.filter(c=>!c.carved).length;
+const score = p => p.hand.reduce((s,c)=>s+c.pts,0)-p.penalty;
+// Tier order: all Easy zones first, then Medium, then Hard, then Master.
+function currentTier(p){ return TIER_ORDER.find(t=>p.hand.some(c=>!c.carved && zoneOf(c.key).tier===t)); }
+function available(p,card){
+  if(card.carved) return {ok:false,why:'carved'};
+  const t=zoneOf(card.key).tier, cur=currentTier(p);
+  if(t!==cur) return {ok:false,why:'after '+TIERS[cur].label};
+  return {ok:true};
+}
+// every (card, combo/strike) in the player's current tier that the dice satisfy (landed strikes excluded)
+function options(p,dice){
+  const out=[];
+  p.hand.forEach((card,ci)=>{
+    if(!available(p,card).ok) return;
+    comboList(zoneOf(card.key)).forEach((cb,k)=>{
+      if(card.done && card.done[k]) return;
+      if(matches(cb.id,dice)) out.push({ci,k});
+    });
+  });
+  return out;
+}
+
+// ---------- ACTIONS ----------
+function actRoll(){
+  const t=G.turn;
+  if(G.phase==='start'){ t.dice=t.dice.map(d6); G.phase='rolled'; log(P().name+' rolls '+t.dice.join(' ')); }
+  else if(G.phase==='rolled' && t.rerolls>0){
+    t.dice=t.dice.map((v,i)=>t.held[i]?v:d6()); t.rerolls--; log(P().name+' rerolls: '+t.dice.join(' '));
+  }
+  render();
+}
+function actHold(i){ if(G.phase!=='rolled') return; G.turn.held[i]^=1; render(); }
+function actLock(){
+  const t=G.turn,p=P();
+  if(p.sabotage>0){
+    p.sabotage--;
+    const idx=Math.floor(Math.random()*5), old=t.dice[idx];
+    t.sab={idx,old,neu:d6()};
+    G.phase='sab'; log(p.name+' is sabotaged: die #'+(idx+1)+' rerolled ('+old+' → '+t.sab.neu+')');
+  } else G.phase='resolve';
+  render();
+}
+function actSabKeep(which){
+  const t=G.turn; t.dice[t.sab.idx]= which==='new'? t.sab.neu : t.sab.old;
+  log(P().name+' keeps the '+(which==='new'?'new':'old')+' die ('+t.dice[t.sab.idx]+')');
+  t.sab=null; G.phase='resolve'; render();
+}
+function actCarve(ci,k){
+  const card=P().hand[ci], z=zoneOf(card.key), cb=comboList(z)[k];
+  G.fresh={pi:G.cur,key:z.key};
+  if(card.done){
+    card.done[k]=true; card.pts+=cb.pts;
+    const n=card.done.filter(Boolean).length;
+    if(n===card.done.length){ card.carved=true; log('✔ '+P().name+' lands the last strike ('+COMBO_NAMES[cb.id]+') and finishes '+z.name+' (+'+cb.pts+')'); }
+    else log('⚒ '+P().name+' strikes '+z.name+' with '+COMBO_NAMES[cb.id]+' ('+n+'/'+card.done.length+', +'+cb.pts+')');
+  } else {
+    card.carved=true; card.pts=cb.pts;
+    log('✔ '+P().name+' carves '+z.name+' with '+COMBO_NAMES[cb.id]+' (+'+cb.pts+')');
+  }
+  endTurn();
+}
+function actCrack(){
+  const p=P(); p.cracks++; const c=crackCost(p.cracks); p.penalty+=c; G.fresh={pi:G.cur,crack:true};
+  log('✖ '+p.name+' misses (no '+TIERS[currentTier(p)].label+' combo) – takes Crack card #'+p.cracks+' (−'+c+')'); endTurn();
+}
+function actTool(){ const p=P(); p.tools--; log('◆ '+p.name+' spends a Tool to avoid a crack ('+p.tools+' left)'); endTurn(); }
+function actRegain(){ const p=P(); p.tools++; log('◆ '+p.name+' rolls a Large Street and regains a Tool ('+p.tools+')'); endTurn(); }
+function actSabotage(i){ G.players[i].sabotage++; log('⚡ '+P().name+' rolls Five of a Kind and sabotages '+G.players[i].name); endTurn(); }
+
+function endTurn(){
+  if(G.players.every(p=>remaining(p)===0)) return finish();
+  let guard=0;
+  do{
+    G.cur++;
+    if(G.cur>=G.players.length){G.cur=0;G.round++;}
+    if(G.round>G.maxRounds) return finish();
+    guard++;
+  } while(remaining(P())===0 && guard<20);
+  freshTurn(); render();
+}
+function finish(){ G.over=true; G.phase='over'; log('Game over.'); render(); }
+
+// ---------- RENDER ----------
+function dieHTML(v,i,held,blank,test){
+  const pips = blank?'':PIPS[v].map(p=>`<span class="p" style="grid-area:${Math.floor(p/3)+1}/${p%3+1}"></span>`).join('');
+  return `<div class="dieWrap"><div class="die ${held?'held':''} ${blank?'blank':''}" data-action="hold" data-i="${i}">${pips}</div>
+    <div class="holdTag">${held?'HELD':''}</div>${test&&!blank?`<button data-action="cycle" data-i="${i}" style="padding:0 7px;font-size:11px">+</button>`:''}</div>`;
+}
+
+// static backdrop: dark stone ground, radial brush-burst, red glow behind the figure, canvas weave, vignette
+const BG_BURST = (()=>{ const r=rng(21); let s=''; const cx=120, cy=84;
+  for(let i=0;i<70;i++){ const a=r()*Math.PI*2, r1=26+r()*46, r2=r1+70+r()*120, w=.035+r()*.08;
+    const p=(rad,ang)=>`${f1(cx+Math.cos(ang)*rad)},${f1(cy+Math.sin(ang)*rad*1.15)}`;
+    const col=['#000','#4a0e10','#1d0708','#000'][i%4], op=[.38,.3,.35,.25][i%4];
+    s+=`<path d="M${p(r1,a-w)} L${p(r2,a)} L${p(r1,a+w)}Z" fill="${col}" opacity="${op}"/>`; }
+  return s; })();
+const FRAME = (()=>{ let d=''; for(let y=58;y<=250;y+=28){ d+=`M18,${y-3} l3,3 -3,3 -3,-3Z M222,${y-3} l3,3 -3,3 -3,-3Z `; }
+  return `<rect x="4" y="4" width="232" height="292" fill="none" stroke="#8f6a26" stroke-width="1.4"/><rect x="9" y="9" width="222" height="282" fill="none" stroke="#e8b658" stroke-width=".6" opacity=".55"/>`
+   + `<path d="M4,22 L4,4 L22,4 M16,4 L16,16 L4,16 M236,22 L236,4 L218,4 M224,4 L224,16 L236,16 M4,278 L4,296 L22,296 M16,296 L16,284 L4,284 M236,278 L236,296 L218,296 M224,296 L224,284 L236,284" fill="none" stroke="#e8b658" stroke-width="1.1" opacity=".85"/>`
+   + `<path d="${d}" fill="#e8b658" opacity=".4"/>`; })();
+function reliefHTML(p,pi){
+  let carved='', ghost='';
+  for(const cat of DRAW_ORDER){
+    const card=p.hand.find(c=>zoneOf(c.key).cat===cat); if(!card) continue;
+    const k=card.key;
+    const fresh = G.fresh && G.fresh.pi===pi && G.fresh.key===k ? ' fresh':'';
+    const nDone = card.done ? card.done.filter(Boolean).length : 0;
+    if(card.carved) carved+=SHAPES[k]('carved'+fresh);
+    else if(nDone>0) carved+=SHAPES[k]('rough '+(nDone/card.done.length<=.5?'r1':'r2')+fresh);
+    else ghost+=SHAPES[k]('ghost');
+  }
+  const CRK=[[62,196,.9,1],[176,150,.85,2],[98,236,.8,3],[196,222,.7,4],[46,112,.75,5],[158,64,.7,6],[120,150,.6,7],[40,250,.7,8]];
+  const blots = Array.from({length:Math.min(p.cracks,CRK.length)},(_,i)=>crackMark(...CRK[i])).join('');
+  return `<svg viewBox="0 0 240 300" role="img" aria-label="${p.name}'s sculpture">
+    <rect width="240" height="300" fill="url(#canvasBg)"/>
+    <g clip-path="url(#cv)"><g filter="url(#brushy)">${BG_BURST}</g></g>
+    <ellipse cx="120" cy="84" rx="78" ry="92" fill="url(#redGlow)" opacity=".6"/>
+    <rect width="240" height="300" filter="url(#weave)" opacity=".22" style="mix-blend-mode:overlay"/>
+    <rect width="240" height="300" fill="url(#vignette)"/>
+    <g clip-path="url(#cv)">
+      <g style="filter:drop-shadow(0 2px 3px rgba(0,0,0,.65))"><g filter="url(#paint)">${carved}</g></g>
+      ${ghost}
+      <g>${blots}</g>
+      <rect width="240" height="300" fill="url(#grade)"/>
+      <rect width="240" height="300" fill="url(#vignette)" opacity=".7"/>
+    </g>
+    ${FRAME}</svg>`;
+}
+function artHTML(key){
+  const a=ART[zoneOf(key).cat], ctx=a.ctx?`<g class="ctx">${SHAPES[a.ctx]('carved')}</g>`:'';
+  return `<svg viewBox="${a.vb}" preserveAspectRatio="xMidYMid meet"><g filter="url(#paint)">${ctx}${SHAPES[key]('carved')}</g></svg>`;
+}
+const FISSURES = [
+  'M30,2 L24,16 L35,25 L21,38 L31,58','M10,10 L26,22 L22,32 L42,40 L36,56','M50,6 L36,20 L42,30 L26,42 L30,58'
+];
+function crackCardHTML(i,isNew){
+  const v=crackCost(i+1);
+  return `<div class="ccard ${isNew?'drop':''}"><div class="cin2"><div class="ct">CRACK</div>
+    <svg viewBox="0 0 60 60"><rect x="3" y="3" width="54" height="54" rx="4" fill="#4b463f"/>
+      <path d="${FISSURES[i%3]}" fill="none" stroke="#000" stroke-width="5" stroke-linejoin="bevel"/>
+      <path d="${FISSURES[i%3]}" fill="none" stroke="#ff7a52" stroke-width="2" stroke-linejoin="bevel"/></svg>
+    <div class="cv">−${v}</div></div></div>`;
+}
+function cracksHTML(p,pi){
+  const newIdx = G.fresh && G.fresh.pi===pi && G.fresh.crack ? p.cracks-1 : -1;
+  const cards = p.cracks ? Array.from({length:p.cracks},(_,i)=>crackCardHTML(i,i===newIdx)).join('') : `<div class="cslot">No<br>cracks</div>`;
+  return `<div class="cracks"><div class="clabel ${p.cracks?'bad':''}">Cracks${p.cracks?' −'+p.penalty:''}</div>${cards}</div>`;
+}
+function cardHTML(p,pi,ci){
+  const card=p.hand[ci], z=zoneOf(card.key), av=available(p,card);
+  const live = pi===G.cur && !G.over && (G.phase==='rolled'||G.phase==='resolve') && av.ok;
+  const multi=!!card.done, nDone=multi?card.done.filter(Boolean).length:0;
+  const combos = comboList(z).map((cb,k)=>{
+    const done = multi && card.done[k];
+    const hit = live && !done && matches(cb.id,G.turn.dice);
+    const lbl = multi ? `${k+1}. ${COMBO_SHORT[cb.id]}` : COMBO_SHORT[cb.id];
+    return `<span class="combo ${hit?'hit':''} ${done?'done':''}" title="${COMBO_NAMES[cb.id]}"><b>${done?'✔ ':''}${lbl}</b><em>${cb.pts}</em></span>`;
+  }).join('');
+  let note;
+  if(card.carved) note=`<div class="cnote">Carved</div>`;
+  else if(!av.ok) note=`<div class="cnote">Locked · ${av.why}</div>`;
+  else if(multi) note=`<div class="cnote">Strike ${nDone}/${card.done.length} · any order</div>`;
+  else note=`<div class="cnote">Carve one</div>`;
+  const cls=['card','t-'+z.tier, card.carved?'carved':'', nDone&&!card.carved?'partial':'', !av.ok&&!card.carved?'locked':'', av.ok?'avail':''].join(' ');
+  return `<div class="${cls}"><div class="cin">
+    <div class="ctitle"><span class="cname">${z.name}</span><i class="gem"></i></div>
+    <div class="art">${artHTML(card.key)}${card.pts?`<div class="seal">${card.pts}</div>`:''}</div>
+    <div class="ctype">${TIERS[z.tier].label} · ${multi?card.done.length+' strikes':'Sculpt'}</div>
+    <div class="ctext">${card.carved?`<div class="combo" style="justify-content:center"><b>+${card.pts} points</b></div>`:combos}</div>
+    ${note}</div></div>`;
+}
+function actionHTML(){
+  const p=P(),t=G.turn,test=document.getElementById('testMode').checked;
+  const blank=G.phase==='start';
+  const diceHTML=`<div class="dice">${t.dice.map((v,i)=>dieHTML(v,i,t.held[i],blank,test&&!blank)).join('')}</div>`;
+  let h='';
+  const tierLbl=TIERS[currentTier(p)].label;
+  if(G.phase==='start'){
+    h+=`<div class="row" style="margin:0">${diceHTML}<button class="primary" data-action="roll">Roll dice</button></div>
+        <div class="msg">Carving the <b>${tierLbl}</b> zones now. Roll, hold dice, reroll up to ${REROLLS} times.</div>`;
+  } else if(G.phase==='rolled'){
+    const n=options(p,t.dice).length;
+    const line = n ? `<span class="ok">${n} ${tierLbl} combo${n>1?'s':''} matched ✔</span>` : `<span class="no">no ${tierLbl} combo yet</span>`;
+    h+=`<div class="row" style="margin:0">${diceHTML}
+      <button class="primary" data-action="roll" ${t.rerolls===0?'disabled':''}>Reroll (${t.rerolls})</button>
+      <button data-action="lock">Lock in →</button></div>
+      <div class="msg">${tierLbl} zones: ${line} · click dice to hold</div>`;
+  } else if(G.phase==='sab'){
+    const s=t.sab;
+    h+=`<div class="row" style="margin:0">${diceHTML}</div><div class="msg">⚡ <b>Sabotage!</b> Die #${s.idx+1} rerolled: was <b>${s.old}</b>, now <b>${s.neu}</b>. Keep which?</div>
+      <div class="row"><button data-action="sabkeep" data-w="old">Keep old (${s.old})</button><button data-action="sabkeep" data-w="new">Keep new (${s.neu})</button></div>`;
+  } else if(G.phase==='resolve'){
+    const opts=options(p,t.dice);
+    h+=`<div class="row" style="margin:0">${diceHTML}</div>`;
+    if(opts.length){
+      h+=`<div class="msg ok">Choose what to carve:</div><div class="row">`;
+      opts.forEach(({ci,k})=>{ const card=p.hand[ci], z=zoneOf(card.key), cb=comboList(z)[k];
+        const verb = card.done ? `Strike ${z.name} (${card.done.filter(Boolean).length+1}/${card.done.length})` : `Carve ${z.name}`;
+        h+=`<button class="primary" data-action="carve" data-c="${ci}" data-k="${k}">${verb} – ${COMBO_NAMES[cb.id]} (+${cb.pts})</button>`; });
+    } else h+=`<div class="msg no">No ${tierLbl} combo. The chisel slips!</div>
+        <div class="row"><button class="danger" data-action="crack">Take Crack card #${p.cracks+1} (−${crackCost(p.cracks+1)})</button>
+        <button data-action="tool" ${p.tools<1?'disabled':''}>Spend Tool: cancel crack</button>`;
+    if(matches('five',t.dice)) G.players.forEach((q,i)=>{ if(i!==G.cur) h+=`<button data-action="sabotage" data-p="${i}">⚡ Instead: sabotage ${q.name}</button>` });
+    if(matches('large',t.dice) && p.tools<MAX_TOOLS) h+=`<button data-action="regain">Instead: regain Tool</button>`;
+    h+=`</div>`;
+  }
+  return h;
+}
+function paneHTML(p,pi){
+  const act = pi===G.cur && !G.over;
+  const done=p.hand.filter(c=>c.carved).length;
+  return `<section class="pane ${act?'active':''}">
+    <div class="phead"><span class="name">${p.name}${act?' ◀':''}</span>
+      <span class="badge">Carved ${done}/6</span><span class="badge">Tools ${p.tools}/${MAX_TOOLS}</span>
+      ${p.sabotage?`<span class="badge warn">⚡ sabotaged ×${p.sabotage}</span>`:''}
+      <span class="score">${score(p)}</span></div>
+    <div class="body">
+      <div class="stage"><div class="sculpt">${reliefHTML(p,pi)}</div>${cracksHTML(p,pi)}</div>
+      <div class="hand">${p.hand.map((_,ci)=>cardHTML(p,pi,ci)).join('')}</div>
+    </div>
+    <div class="actions">${act?actionHTML():`<span class="wait">${G.over?'Finished':'Waiting for turn…'}</span>`}</div></section>`;
+}
+function render(){
+  if(!G) return;
+  const app=document.getElementById('app');
+  app.className='n'+G.players.length;
+  document.getElementById('meta').textContent=`ROUND ${Math.min(G.round,G.maxRounds)} / ${G.maxRounds}`;
+  document.getElementById('ticker').textContent=G.log[0]||'';
+  app.innerHTML=G.players.map((p,i)=>paneHTML(p,i)).join('');
+  G.fresh=null;
+  if(G.over) showEnd();
+}
+function showEnd(){
+  const rows=G.players.map(p=>({p,s:score(p)})).sort((a,b)=>b.s-a.s);
+  const top=rows[0].s, winners=rows.filter(r=>r.s===top).map(r=>r.p.name).join(' & ');
+  document.getElementById('overlay').innerHTML=`<div class="overlay"><div class="modal"><h2>${winners} wins!</h2>
+    <table><tr><th>PLAYER</th><th>ZONES</th><th>POINTS</th><th>CRACKS</th><th>TOTAL</th></tr>
+    ${rows.map(r=>`<tr><td>${r.p.name}</td><td>${r.p.hand.filter(c=>c.carved).length}/6</td><td>${r.p.hand.reduce((s,c)=>s+c.pts,0)}</td><td>−${r.p.penalty}</td><td><b>${r.s}</b></td></tr>`).join('')}</table>
+    <div style="display:flex;gap:8px"><button class="primary" data-action="setup">Play again</button><button data-action="close">View sculptures</button></div></div></div>`;
+}
+function modal(html){ document.getElementById('overlay').innerHTML=`<div class="overlay"><div class="modal">${html}<div style="margin-top:12px"><button data-action="close">Close</button></div></div></div>`; }
+function showLog(){ modal(`<h2>Log</h2><div class="logl">${(G?G.log:[]).map(l=>`<div>${l}</div>`).join('')||'Nothing yet.'}</div>`); }
+function showRules(){ modal(`<h2>Rules</h2><ul>
+  <li><b>The relief:</b> each player is carving a dark-fantasy legionary from stone. The sculpture has 6 zones (cloak, arms, armour, head, base + one Master showpiece), shown as cards. Uncarved zones appear as dashed sketch lines on the block.</li>
+  <li><b>Order:</b> you must carve all your <b>Easy</b> zones first, then <b>Medium</b>, then <b>Hard</b>, and last <b>Master</b>. Inside a tier, any order.</li>
+  <li><b>Turn:</b> roll 5 dice → up to ${REROLLS} rerolls (click dice to hold) → lock in → carve one zone of your current tier whose combo you matched.</li>
+  <li><b>Easy &amp; Medium zones</b> show two combos: match either one to carve the zone (the second is worth more).</li>
+  <li><b>Hard zones (2 strikes) &amp; Master zones (3 strikes):</b> every strike must be landed, one per turn, in any order. Landed strikes are kept (the zone shows as rough stone, then is finished in full detail); a miss never undoes progress.</li>
+  <li><b>Fail:</b> none of your current-tier combos matched → you take a <b>Crack card</b>, which also splits your stone: −1 for the first, −${CRACK_CAP} for every one after. Spend a Tool to avoid it.</li>
+  <li><b>Tools:</b> start with ${START_TOOLS}, max ${MAX_TOOLS}. <b>Large Street</b> instead of carving = regain a Tool.</li>
+  <li><b>Five of a Kind</b> instead of carving = sabotage: the opponent's next lock-in rerolls one random die; they keep old or new.</li>
+  <li><b>Combos:</b> Pair/Triple/Four = at least that many equal dice. Two Pair = two different faces twice (a Full House counts). Small Street 4 in a row, Large 5 in a row, Full House 3+2, Five of a Kind all equal. All Even / All Odd = every die even / odd. Sum 24+ / Sum 11− = the total of the five dice is at least / at most that number. Three 6s / Three 1s = at least three of that face.</li>
+  <li>Cards are sorted Easy → Master.</li>
+  <li>Game ends after the set rounds, or when everyone has finished every zone. Highest score wins.</li></ul>`); }
+function showSetup(){
+  document.getElementById('overlay').innerHTML=`<div class="overlay"><div class="modal"><h2>CHISEL – New Game</h2>
+    <p style="color:var(--muted)">One screen controls all players (hot-seat). Each player has their own workbench.</p>
+    <label class="f">Players</label><select id="sN"><option>2</option><option>3</option><option selected>4</option></select>
+    <label class="f">Rounds</label><select id="sR"><option>12</option><option>14</option><option selected>16</option><option>18</option></select>
+    <div style="margin-top:18px"><button class="primary" data-action="start">Start game</button></div></div></div>`;
+}
+
+// ---------- EVENTS ----------
+document.addEventListener('click',e=>{
+  const el=e.target.closest('[data-action]'); if(!el) return;
+  const a=el.dataset.action, i=+el.dataset.i;
+  switch(a){
+    case 'roll': actRoll(); break;
+    case 'hold': actHold(i); break;
+    case 'cycle': G.turn.dice[i]=G.turn.dice[i]%6+1; render(); break;
+    case 'lock': actLock(); break;
+    case 'sabkeep': actSabKeep(el.dataset.w); break;
+    case 'carve': actCarve(+el.dataset.c,+el.dataset.k); break;
+    case 'crack': actCrack(); break;
+    case 'tool': actTool(); break;
+    case 'regain': actRegain(); break;
+    case 'sabotage': actSabotage(+el.dataset.p); break;
+    case 'logv': showLog(); break;
+    case 'rulesv': showRules(); break;
+    case 'setup': showSetup(); break;
+    case 'close': document.getElementById('overlay').innerHTML=''; break;
+    case 'start': {
+      const n=+document.getElementById('sN').value, r=+document.getElementById('sR').value;
+      document.getElementById('overlay').innerHTML=''; newGame(n,r); break; }
+  }
+});
+document.getElementById('newGameBtn').onclick=showSetup;
+document.getElementById('testMode').onchange=()=>G&&render();
+showSetup();
+</script>
+</body>
+</html>
